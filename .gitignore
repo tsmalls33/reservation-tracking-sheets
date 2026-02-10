@@ -208,5 +208,6 @@ __marimo__/
 
 # Project-specific
 credentials/
-*.json
+credentials/*.json
 data/
+notes.md
