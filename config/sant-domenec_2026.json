@@ -1,8 +1,9 @@
 {
   "spreadsheet_id": "REPLACE_WITH_SANT_DOMENEC_SHEET_ID",
+  "language": "es",
   "tabs": {
     "january_reservations": {
-      "tab_name": "January",
+      "tab_name": "Enero",
       "start_range": "F11",
       "columns": ["Nombre Reserva", "Entrada", "Salida", "Precio Total"],
       "column_mapping": {
@@ -14,7 +15,7 @@
       "physical_columns": 5
     },
     "january_costs": {
-      "tab_name": "January",
+      "tab_name": "Enero",
       "start_range": "B6",
       "columns": ["Cost_Name", "Amount"],
       "column_mapping": {
@@ -24,7 +25,7 @@
       "physical_columns": 2
     },
     "february_reservations": {
-      "tab_name": "February",
+      "tab_name": "Febrero",
       "start_range": "F11",
       "columns": ["Nombre Reserva", "Entrada", "Salida", "Precio Total"],
       "column_mapping": {
@@ -36,7 +37,7 @@
       "physical_columns": 5
     },
     "february_costs": {
-      "tab_name": "February",
+      "tab_name": "Febrero",
       "start_range": "B6",
       "columns": ["Cost_Name", "Amount"],
       "column_mapping": {
@@ -46,7 +47,7 @@
       "physical_columns": 2
     },
     "march_reservations": {
-      "tab_name": "March",
+      "tab_name": "Marzo",
       "start_range": "F11",
       "columns": ["Nombre Reserva", "Entrada", "Salida", "Precio Total"],
       "column_mapping": {
@@ -58,7 +59,7 @@
       "physical_columns": 5
     },
     "march_costs": {
-      "tab_name": "March",
+      "tab_name": "Marzo",
       "start_range": "B6",
       "columns": ["Cost_Name", "Amount"],
       "column_mapping": {
@@ -68,7 +69,7 @@
       "physical_columns": 2
     },
     "april_reservations": {
-      "tab_name": "April",
+      "tab_name": "Abril",
       "start_range": "F11",
       "columns": ["Nombre Reserva", "Entrada", "Salida", "Precio Total"],
       "column_mapping": {
@@ -80,7 +81,7 @@
       "physical_columns": 5
     },
     "april_costs": {
-      "tab_name": "April",
+      "tab_name": "Abril",
       "start_range": "B6",
       "columns": ["Cost_Name", "Amount"],
       "column_mapping": {
@@ -90,7 +91,7 @@
       "physical_columns": 2
     },
     "may_reservations": {
-      "tab_name": "May",
+      "tab_name": "Mayo",
       "start_range": "F11",
       "columns": ["Nombre Reserva", "Entrada", "Salida", "Precio Total"],
       "column_mapping": {
@@ -102,7 +103,7 @@
       "physical_columns": 5
     },
     "may_costs": {
-      "tab_name": "May",
+      "tab_name": "Mayo",
       "start_range": "B6",
       "columns": ["Cost_Name", "Amount"],
       "column_mapping": {
@@ -112,7 +113,7 @@
       "physical_columns": 2
     },
     "june_reservations": {
-      "tab_name": "June",
+      "tab_name": "Junio",
       "start_range": "F11",
       "columns": ["Nombre Reserva", "Entrada", "Salida", "Precio Total"],
       "column_mapping": {
@@ -124,7 +125,7 @@
       "physical_columns": 5
     },
     "june_costs": {
-      "tab_name": "June",
+      "tab_name": "Junio",
       "start_range": "B6",
       "columns": ["Cost_Name", "Amount"],
       "column_mapping": {
@@ -134,7 +135,7 @@
       "physical_columns": 2
     },
     "july_reservations": {
-      "tab_name": "July",
+      "tab_name": "Julio",
       "start_range": "F11",
       "columns": ["Nombre Reserva", "Entrada", "Salida", "Precio Total"],
       "column_mapping": {
@@ -146,7 +147,7 @@
       "physical_columns": 5
     },
     "july_costs": {
-      "tab_name": "July",
+      "tab_name": "Julio",
       "start_range": "B6",
       "columns": ["Cost_Name", "Amount"],
       "column_mapping": {
@@ -156,7 +157,7 @@
       "physical_columns": 2
     },
     "august_reservations": {
-      "tab_name": "August",
+      "tab_name": "Agosto",
       "start_range": "F11",
       "columns": ["Nombre Reserva", "Entrada", "Salida", "Precio Total"],
       "column_mapping": {
@@ -168,7 +169,7 @@
       "physical_columns": 5
     },
     "august_costs": {
-      "tab_name": "August",
+      "tab_name": "Agosto",
       "start_range": "B6",
       "columns": ["Cost_Name", "Amount"],
       "column_mapping": {
@@ -178,7 +179,7 @@
       "physical_columns": 2
     },
     "september_reservations": {
-      "tab_name": "September",
+      "tab_name": "Septiembre",
       "start_range": "F11",
       "columns": ["Nombre Reserva", "Entrada", "Salida", "Precio Total"],
       "column_mapping": {
@@ -190,7 +191,7 @@
       "physical_columns": 5
     },
     "september_costs": {
-      "tab_name": "September",
+      "tab_name": "Septiembre",
       "start_range": "B6",
       "columns": ["Cost_Name", "Amount"],
       "column_mapping": {
@@ -200,7 +201,7 @@
       "physical_columns": 2
     },
     "october_reservations": {
-      "tab_name": "October",
+      "tab_name": "Octubre",
       "start_range": "F11",
       "columns": ["Nombre Reserva", "Entrada", "Salida", "Precio Total"],
       "column_mapping": {
@@ -212,7 +213,7 @@
       "physical_columns": 5
     },
     "october_costs": {
-      "tab_name": "October",
+      "tab_name": "Octubre",
       "start_range": "B6",
       "columns": ["Cost_Name", "Amount"],
       "column_mapping": {
@@ -222,7 +223,7 @@
       "physical_columns": 2
     },
     "november_reservations": {
-      "tab_name": "November",
+      "tab_name": "Noviembre",
       "start_range": "F11",
       "columns": ["Nombre Reserva", "Entrada", "Salida", "Precio Total"],
       "column_mapping": {
@@ -234,7 +235,7 @@
       "physical_columns": 5
     },
     "november_costs": {
-      "tab_name": "November",
+      "tab_name": "Noviembre",
       "start_range": "B6",
       "columns": ["Cost_Name", "Amount"],
       "column_mapping": {
@@ -244,7 +245,7 @@
       "physical_columns": 2
     },
     "december_reservations": {
-      "tab_name": "December",
+      "tab_name": "Diciembre",
       "start_range": "F11",
       "columns": ["Nombre Reserva", "Entrada", "Salida", "Precio Total"],
       "column_mapping": {
@@ -256,7 +257,7 @@
       "physical_columns": 5
     },
     "december_costs": {
-      "tab_name": "December",
+      "tab_name": "Diciembre",
       "start_range": "B6",
       "columns": ["Cost_Name", "Amount"],
       "column_mapping": {
