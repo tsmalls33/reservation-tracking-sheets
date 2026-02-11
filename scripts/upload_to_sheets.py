@@ -121,13 +121,58 @@ def detect_months_from_csv(csv_file):
     return [month_map[m] for m in months if m in month_map], months
 
 def clear_exact_range(worksheet, start_cell, num_cols, num_rows):
-    """Clear VALUES ONLY, preserve formatting/data validation."""
-    end_cell = chr(ord(start_cell[0]) + num_cols - 1) + str(int(start_cell[1:]) + num_rows - 1)
-    range_str = f"{start_cell}:{end_cell}"
+    """Clear VALUES ONLY, preserve formatting/data validation.
+    
+    Args:
+        worksheet: gspread worksheet
+        start_cell: Starting cell (e.g., 'F11')
+        num_cols: Number of physical columns to clear
+        num_rows: Number of rows to clear
+    """
+    start_col_letter = ''.join(filter(str.isalpha, start_cell))
+    start_row = int(''.join(filter(str.isdigit, start_cell)))
+    
+    # Calculate end column letter
+    start_col_num = ord(start_col_letter.upper()) - ord('A') + 1
+    end_col_num = start_col_num + num_cols - 1
+    end_col_letter = chr(ord('A') + end_col_num - 1)
+    
+    end_row = start_row + num_rows - 1
+    range_str = f"{start_cell}:{end_col_letter}{end_row}"
+    
     worksheet.batch_clear([range_str])
 
+def build_row_from_mapping(row_data, column_mapping, columns):
+    """Build a row list dynamically based on column_mapping config.
+    
+    Args:
+        row_data: pandas Series with CSV data
+        column_mapping: dict mapping column names to their config
+        columns: ordered list of column names from config
+    
+    Returns:
+        List of values positioned according to sheet_col_offset
+    """
+    # Find max offset to determine row size
+    max_offset = max(col_cfg['sheet_col_offset'] for col_cfg in column_mapping.values())
+    row_list = [''] * (max_offset + 1)
+    
+    for col_name in columns:
+        if col_name not in column_mapping:
+            continue
+        
+        col_cfg = column_mapping[col_name]
+        csv_field = col_cfg['csv_field']
+        offset = col_cfg['sheet_col_offset']
+        
+        # Get value from CSV, handle missing fields
+        value = str(row_data.get(csv_field, '')) if csv_field in row_data.index else ''
+        row_list[offset] = value
+    
+    return row_list
+
 def upload_reservations(client, config, spreadsheet_id, csv_file, hard_replace=False):
-    """Upload processed reservations to auto-detected months."""
+    """Upload processed reservations using dynamic column mapping from config."""
     
     print_header("📊 UPLOAD SUMMARY", "=")
     
@@ -163,14 +208,18 @@ def upload_reservations(client, config, spreadsheet_id, csv_file, hard_replace=F
     
     cleared_count = 0
     for tab_key in tabs_to_clear:
+        tab_config = config['tabs'][tab_key]
         tab_name = get_tab_name(config, tab_key)
+        
         if tab_name not in available_tabs:
             continue
+        
         try:
             ws = get_worksheet_fuzzy(spreadsheet, tab_name)
-            clear_exact_range(ws, config['tabs'][tab_key]['start_range'], 
-                            len(config['tabs'][tab_key]['columns']), 15)
-            print_info(f"{tab_name}: Cleared", indent=1)
+            # Use physical_columns from config for dynamic clearing
+            num_cols = tab_config.get('physical_columns', len(tab_config['columns']))
+            clear_exact_range(ws, tab_config['start_range'], num_cols, 15)
+            print_info(f"{tab_name}: Cleared {num_cols} columns", indent=1)
             cleared_count += 1
         except gspread.exceptions.WorksheetNotFound:
             continue
@@ -186,6 +235,7 @@ def upload_reservations(client, config, spreadsheet_id, csv_file, hard_replace=F
     total_uploaded = 0
     
     for tab_key in target_tabs:
+        tab_config = config['tabs'][tab_key]
         tab_name = get_tab_name(config, tab_key)
         
         if tab_name not in available_tabs:
@@ -203,22 +253,24 @@ def upload_reservations(client, config, spreadsheet_id, csv_file, hard_replace=F
         worksheet.update(values=[[month_name]], range_name='B2', value_input_option='USER_ENTERED')
         
         if len(month_data) > 0:
-            columns = config['tabs'][tab_key]['columns']
+            columns = tab_config['columns']
+            column_mapping = tab_config.get('column_mapping', {})
             
-            processed_rows = []
-            for _, row in month_data.iterrows():
-                row_list = ['' for _ in columns]
-                row_list[0] = str(row['Actividad'])
-                row_list[1] = ''
-                row_list[2] = str(row['Entrada'])
-                row_list[3] = str(row['Salida'])
-                row_list[4] = str(row['Noches'])
-                row_list[5] = str(row['Precio'])
-                row_list[6] = str(row['Check In/Out'])
-                row_list[7] = str(row['Comision'])
-                processed_rows.append(row_list)
+            # If no column_mapping provided, fall back to simple ordered mapping
+            if not column_mapping:
+                print_info(f"⚠️  No column_mapping for {tab_key}, using simple mapping", indent=1)
+                processed_rows = []
+                for _, row in month_data.iterrows():
+                    row_list = [str(row.get(col, '')) for col in columns]
+                    processed_rows.append(row_list)
+            else:
+                # Use dynamic mapping
+                processed_rows = []
+                for _, row in month_data.iterrows():
+                    row_list = build_row_from_mapping(row, column_mapping, columns)
+                    processed_rows.append(row_list)
             
-            start_cell = config['tabs'][tab_key]['start_range']
+            start_cell = tab_config['start_range']
             worksheet.update(values=processed_rows, range_name=start_cell, value_input_option='USER_ENTERED')
             print_step("✓", f"{month_name}: {len(processed_rows)} reservations", indent=1)
             total_uploaded += len(processed_rows)
