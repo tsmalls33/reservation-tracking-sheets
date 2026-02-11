@@ -17,6 +17,22 @@ warnings.filterwarnings('ignore', category=UserWarning)
 
 PROJECT_ROOT = Path("/Users/thomas/dev/reservation-tracking-sheets")
 
+# Month name translations
+MONTH_NAMES = {
+    'january': {'en': 'January', 'es': 'Enero'},
+    'february': {'en': 'February', 'es': 'Febrero'},
+    'march': {'en': 'March', 'es': 'Marzo'},
+    'april': {'en': 'April', 'es': 'Abril'},
+    'may': {'en': 'May', 'es': 'Mayo'},
+    'june': {'en': 'June', 'es': 'Junio'},
+    'july': {'en': 'July', 'es': 'Julio'},
+    'august': {'en': 'August', 'es': 'Agosto'},
+    'september': {'en': 'September', 'es': 'Septiembre'},
+    'october': {'en': 'October', 'es': 'Octubre'},
+    'november': {'en': 'November', 'es': 'Noviembre'},
+    'december': {'en': 'December', 'es': 'Diciembre'}
+}
+
 def print_header(title, char="="):
     """Print a styled header."""
     print(f"\n{char * 70}")
@@ -41,6 +57,20 @@ def print_info(message, indent=1):
 def get_tab_name(config, tab_key):
     """Get tab name with whitespace stripped."""
     return config['tabs'][tab_key]['tab_name'].strip()
+
+def get_month_name_for_display(month_key, language='en'):
+    """Get the display name for a month in the specified language.
+    
+    Args:
+        month_key: Month key like 'january', 'february', etc.
+        language: 'en' for English or 'es' for Spanish
+    
+    Returns:
+        Capitalized month name in the specified language
+    """
+    if month_key in MONTH_NAMES:
+        return MONTH_NAMES[month_key].get(language, MONTH_NAMES[month_key]['en'])
+    return month_key.capitalize()
 
 def get_worksheet_fuzzy(spreadsheet, target_name):
     """Find worksheet by name, ignoring whitespace."""
@@ -71,6 +101,14 @@ def load_config(apartment_name, year, test_mode=False):
         print_success(f"Config loaded")
         print_info(f"Spreadsheet: {config['spreadsheet_id'][:20]}...")
         print_info(f"Tabs defined: {len(config.get('tabs', {}))}")
+        
+        # Detect language from config or default to English
+        language = config.get('language', 'en')
+        if language not in ['en', 'es']:
+            language = 'en'
+        config['_language'] = language
+        print_info(f"Language: {language.upper()}")
+        
         return config
     else:
         available = list_config_files()
@@ -121,15 +159,94 @@ def detect_months_from_csv(csv_file):
     return [month_map[m] for m in months if m in month_map], months
 
 def clear_exact_range(worksheet, start_cell, num_cols, num_rows):
-    """Clear VALUES ONLY, preserve formatting/data validation."""
-    end_cell = chr(ord(start_cell[0]) + num_cols - 1) + str(int(start_cell[1:]) + num_rows - 1)
-    range_str = f"{start_cell}:{end_cell}"
+    """Clear VALUES ONLY, preserve formatting/data validation.
+    
+    Args:
+        worksheet: gspread worksheet
+        start_cell: Starting cell (e.g., 'F11')
+        num_cols: Number of physical columns to clear
+        num_rows: Number of rows to clear
+    """
+    start_col_letter = ''.join(filter(str.isalpha, start_cell))
+    start_row = int(''.join(filter(str.isdigit, start_cell)))
+    
+    # Calculate end column letter
+    start_col_num = ord(start_col_letter.upper()) - ord('A') + 1
+    end_col_num = start_col_num + num_cols - 1
+    end_col_letter = chr(ord('A') + end_col_num - 1)
+    
+    end_row = start_row + num_rows - 1
+    range_str = f"{start_cell}:{end_col_letter}{end_row}"
+    
     worksheet.batch_clear([range_str])
 
+def build_row_from_mapping(row_data, column_mapping, columns):
+    """Build a row list dynamically based on column_mapping config.
+    
+    Supports both single field mapping and calculated fields (e.g., sum of multiple fields).
+    
+    Args:
+        row_data: pandas Series with CSV data
+        column_mapping: dict mapping column names to their config
+        columns: ordered list of column names from config
+    
+    Returns:
+        List of values positioned according to sheet_col_offset
+    """
+    # Find max offset to determine row size
+    max_offset = max(col_cfg['sheet_col_offset'] for col_cfg in column_mapping.values())
+    row_list = [''] * (max_offset + 1)
+    
+    for col_name in columns:
+        if col_name not in column_mapping:
+            continue
+        
+        col_cfg = column_mapping[col_name]
+        offset = col_cfg['sheet_col_offset']
+        
+        # Check if this is a calculated field (multiple csv_fields with operation)
+        if 'csv_fields' in col_cfg and 'operation' in col_cfg:
+            csv_fields = col_cfg['csv_fields']
+            operation = col_cfg['operation']
+            
+            if operation == 'sum':
+                # Sum multiple CSV fields
+                values = []
+                for field in csv_fields:
+                    if field in row_data.index:
+                        # Try to convert to float, default to 0 if fails
+                        try:
+                            val = float(row_data[field]) if pd.notna(row_data[field]) else 0.0
+                        except (ValueError, TypeError):
+                            val = 0.0
+                        values.append(val)
+                    else:
+                        values.append(0.0)
+                value = sum(values)
+            else:
+                # Unknown operation, fallback to empty
+                value = ''
+        
+        elif 'csv_field' in col_cfg:
+            # Single field mapping (existing behavior)
+            csv_field = col_cfg['csv_field']
+            value = str(row_data.get(csv_field, '')) if csv_field in row_data.index else ''
+        
+        else:
+            # No valid field mapping
+            value = ''
+        
+        row_list[offset] = value
+    
+    return row_list
+
 def upload_reservations(client, config, spreadsheet_id, csv_file, hard_replace=False):
-    """Upload processed reservations to auto-detected months."""
+    """Upload processed reservations using dynamic column mapping from config."""
     
     print_header("📊 UPLOAD SUMMARY", "=")
+    
+    # Get language setting
+    language = config.get('_language', 'en')
     
     # Read CSV
     df = pd.read_csv(csv_file)
@@ -141,7 +258,8 @@ def upload_reservations(client, config, spreadsheet_id, csv_file, hard_replace=F
     
     # Detect months
     target_tabs, month_names = detect_months_from_csv(csv_file)
-    print_step("📅", f"Target months: {', '.join([m.capitalize() for m in month_names])}")
+    month_display_names = [get_month_name_for_display(m, language) for m in month_names]
+    print_step("📅", f"Target months: {', '.join(month_display_names)}")
     
     # Open spreadsheet
     print_step("🔗", "Connecting to Google Sheets...")
@@ -163,14 +281,18 @@ def upload_reservations(client, config, spreadsheet_id, csv_file, hard_replace=F
     
     cleared_count = 0
     for tab_key in tabs_to_clear:
+        tab_config = config['tabs'][tab_key]
         tab_name = get_tab_name(config, tab_key)
+        
         if tab_name not in available_tabs:
             continue
+        
         try:
             ws = get_worksheet_fuzzy(spreadsheet, tab_name)
-            clear_exact_range(ws, config['tabs'][tab_key]['start_range'], 
-                            len(config['tabs'][tab_key]['columns']), 15)
-            print_info(f"{tab_name}: Cleared", indent=1)
+            # Use physical_columns from config for dynamic clearing
+            num_cols = tab_config.get('physical_columns', len(tab_config['columns']))
+            clear_exact_range(ws, tab_config['start_range'], num_cols, 15)
+            print_info(f"{tab_name}: Cleared {num_cols} columns", indent=1)
             cleared_count += 1
         except gspread.exceptions.WorksheetNotFound:
             continue
@@ -186,41 +308,47 @@ def upload_reservations(client, config, spreadsheet_id, csv_file, hard_replace=F
     total_uploaded = 0
     
     for tab_key in target_tabs:
+        tab_config = config['tabs'][tab_key]
         tab_name = get_tab_name(config, tab_key)
         
         if tab_name not in available_tabs:
             continue
         
         month_data = df[df['month_name'] == tab_key.split('_')[0]]
-        month_name = month_data['month_name'].iloc[0].capitalize() if not month_data.empty else tab_key.split('_')[0].capitalize()
+        
+        # Get month name in the configured language
+        month_key = tab_key.split('_')[0]
+        month_display = get_month_name_for_display(month_key, language)
         
         try:
             worksheet = get_worksheet_fuzzy(spreadsheet, tab_name)
         except gspread.exceptions.WorksheetNotFound:
             continue
 
-        # Update B2 with month name
-        worksheet.update(values=[[month_name]], range_name='B2', value_input_option='USER_ENTERED')
+        # Update B2 with month name in configured language
+        worksheet.update(values=[[month_display]], range_name='B2', value_input_option='USER_ENTERED')
         
         if len(month_data) > 0:
-            columns = config['tabs'][tab_key]['columns']
+            columns = tab_config['columns']
+            column_mapping = tab_config.get('column_mapping', {})
             
-            processed_rows = []
-            for _, row in month_data.iterrows():
-                row_list = ['' for _ in columns]
-                row_list[0] = str(row['Actividad'])
-                row_list[1] = ''
-                row_list[2] = str(row['Entrada'])
-                row_list[3] = str(row['Salida'])
-                row_list[4] = str(row['Noches'])
-                row_list[5] = str(row['Precio'])
-                row_list[6] = str(row['Check In/Out'])
-                row_list[7] = str(row['Comision'])
-                processed_rows.append(row_list)
+            # If no column_mapping provided, fall back to simple ordered mapping
+            if not column_mapping:
+                print_info(f"⚠️  No column_mapping for {tab_key}, using simple mapping", indent=1)
+                processed_rows = []
+                for _, row in month_data.iterrows():
+                    row_list = [str(row.get(col, '')) for col in columns]
+                    processed_rows.append(row_list)
+            else:
+                # Use dynamic mapping
+                processed_rows = []
+                for _, row in month_data.iterrows():
+                    row_list = build_row_from_mapping(row, column_mapping, columns)
+                    processed_rows.append(row_list)
             
-            start_cell = config['tabs'][tab_key]['start_range']
+            start_cell = tab_config['start_range']
             worksheet.update(values=processed_rows, range_name=start_cell, value_input_option='USER_ENTERED')
-            print_step("✓", f"{month_name}: {len(processed_rows)} reservations", indent=1)
+            print_step("✓", f"{month_display}: {len(processed_rows)} reservations", indent=1)
             total_uploaded += len(processed_rows)
     
     print_header("🎉 COMPLETE", "=")
