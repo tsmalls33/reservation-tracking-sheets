@@ -130,7 +130,7 @@ Smart Upload: Auto-detects months, only clears affected tabs (unless -H), preser
 
 ## 🐛 Troubleshooting
 
-Config not found: Check naming {apartment}_{year}.json or {apartment}_{year}_test.json in config/
+Config not found: Check naming {apartment}__{year}.json or {apartment}__{year}_test.json in config/
 
 Worksheet not found: Verify tab names in config match Sheet (ignoring whitespace)
 
