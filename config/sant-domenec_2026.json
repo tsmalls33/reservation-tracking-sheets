@@ -9,7 +9,7 @@
         "Nombre Reserva": {"csv_field": "Actividad", "sheet_col_offset": 0, "skip_next": true},
         "Entrada": {"csv_field": "Entrada", "sheet_col_offset": 2},
         "Salida": {"csv_field": "Salida", "sheet_col_offset": 3},
-        "Precio Total": {"csv_field": "Precio", "sheet_col_offset": 4}
+        "Precio Total": {"csv_fields": ["Precio", "Comision"], "operation": "sum", "sheet_col_offset": 4}
       },
       "physical_columns": 5
     },
@@ -31,7 +31,7 @@
         "Nombre Reserva": {"csv_field": "Actividad", "sheet_col_offset": 0, "skip_next": true},
         "Entrada": {"csv_field": "Entrada", "sheet_col_offset": 2},
         "Salida": {"csv_field": "Salida", "sheet_col_offset": 3},
-        "Precio Total": {"csv_field": "Precio", "sheet_col_offset": 4}
+        "Precio Total": {"csv_fields": ["Precio", "Comision"], "operation": "sum", "sheet_col_offset": 4}
       },
       "physical_columns": 5
     },
@@ -53,7 +53,7 @@
         "Nombre Reserva": {"csv_field": "Actividad", "sheet_col_offset": 0, "skip_next": true},
         "Entrada": {"csv_field": "Entrada", "sheet_col_offset": 2},
         "Salida": {"csv_field": "Salida", "sheet_col_offset": 3},
-        "Precio Total": {"csv_field": "Precio", "sheet_col_offset": 4}
+        "Precio Total": {"csv_fields": ["Precio", "Comision"], "operation": "sum", "sheet_col_offset": 4}
       },
       "physical_columns": 5
     },
@@ -75,7 +75,7 @@
         "Nombre Reserva": {"csv_field": "Actividad", "sheet_col_offset": 0, "skip_next": true},
         "Entrada": {"csv_field": "Entrada", "sheet_col_offset": 2},
         "Salida": {"csv_field": "Salida", "sheet_col_offset": 3},
-        "Precio Total": {"csv_field": "Precio", "sheet_col_offset": 4}
+        "Precio Total": {"csv_fields": ["Precio", "Comision"], "operation": "sum", "sheet_col_offset": 4}
       },
       "physical_columns": 5
     },
@@ -97,7 +97,7 @@
         "Nombre Reserva": {"csv_field": "Actividad", "sheet_col_offset": 0, "skip_next": true},
         "Entrada": {"csv_field": "Entrada", "sheet_col_offset": 2},
         "Salida": {"csv_field": "Salida", "sheet_col_offset": 3},
-        "Precio Total": {"csv_field": "Precio", "sheet_col_offset": 4}
+        "Precio Total": {"csv_fields": ["Precio", "Comision"], "operation": "sum", "sheet_col_offset": 4}
       },
       "physical_columns": 5
     },
@@ -119,7 +119,7 @@
         "Nombre Reserva": {"csv_field": "Actividad", "sheet_col_offset": 0, "skip_next": true},
         "Entrada": {"csv_field": "Entrada", "sheet_col_offset": 2},
         "Salida": {"csv_field": "Salida", "sheet_col_offset": 3},
-        "Precio Total": {"csv_field": "Precio", "sheet_col_offset": 4}
+        "Precio Total": {"csv_fields": ["Precio", "Comision"], "operation": "sum", "sheet_col_offset": 4}
       },
       "physical_columns": 5
     },
@@ -141,7 +141,7 @@
         "Nombre Reserva": {"csv_field": "Actividad", "sheet_col_offset": 0, "skip_next": true},
         "Entrada": {"csv_field": "Entrada", "sheet_col_offset": 2},
         "Salida": {"csv_field": "Salida", "sheet_col_offset": 3},
-        "Precio Total": {"csv_field": "Precio", "sheet_col_offset": 4}
+        "Precio Total": {"csv_fields": ["Precio", "Comision"], "operation": "sum", "sheet_col_offset": 4}
       },
       "physical_columns": 5
     },
@@ -163,7 +163,7 @@
         "Nombre Reserva": {"csv_field": "Actividad", "sheet_col_offset": 0, "skip_next": true},
         "Entrada": {"csv_field": "Entrada", "sheet_col_offset": 2},
         "Salida": {"csv_field": "Salida", "sheet_col_offset": 3},
-        "Precio Total": {"csv_field": "Precio", "sheet_col_offset": 4}
+        "Precio Total": {"csv_fields": ["Precio", "Comision"], "operation": "sum", "sheet_col_offset": 4}
       },
       "physical_columns": 5
     },
@@ -185,7 +185,7 @@
         "Nombre Reserva": {"csv_field": "Actividad", "sheet_col_offset": 0, "skip_next": true},
         "Entrada": {"csv_field": "Entrada", "sheet_col_offset": 2},
         "Salida": {"csv_field": "Salida", "sheet_col_offset": 3},
-        "Precio Total": {"csv_field": "Precio", "sheet_col_offset": 4}
+        "Precio Total": {"csv_fields": ["Precio", "Comision"], "operation": "sum", "sheet_col_offset": 4}
       },
       "physical_columns": 5
     },
@@ -207,7 +207,7 @@
         "Nombre Reserva": {"csv_field": "Actividad", "sheet_col_offset": 0, "skip_next": true},
         "Entrada": {"csv_field": "Entrada", "sheet_col_offset": 2},
         "Salida": {"csv_field": "Salida", "sheet_col_offset": 3},
-        "Precio Total": {"csv_field": "Precio", "sheet_col_offset": 4}
+        "Precio Total": {"csv_fields": ["Precio", "Comision"], "operation": "sum", "sheet_col_offset": 4}
       },
       "physical_columns": 5
     },
@@ -229,7 +229,7 @@
         "Nombre Reserva": {"csv_field": "Actividad", "sheet_col_offset": 0, "skip_next": true},
         "Entrada": {"csv_field": "Entrada", "sheet_col_offset": 2},
         "Salida": {"csv_field": "Salida", "sheet_col_offset": 3},
-        "Precio Total": {"csv_field": "Precio", "sheet_col_offset": 4}
+        "Precio Total": {"csv_fields": ["Precio", "Comision"], "operation": "sum", "sheet_col_offset": 4}
       },
       "physical_columns": 5
     },
@@ -251,7 +251,7 @@
         "Nombre Reserva": {"csv_field": "Actividad", "sheet_col_offset": 0, "skip_next": true},
         "Entrada": {"csv_field": "Entrada", "sheet_col_offset": 2},
         "Salida": {"csv_field": "Salida", "sheet_col_offset": 3},
-        "Precio Total": {"csv_field": "Precio", "sheet_col_offset": 4}
+        "Precio Total": {"csv_fields": ["Precio", "Comision"], "operation": "sum", "sheet_col_offset": 4}
       },
       "physical_columns": 5
     },
