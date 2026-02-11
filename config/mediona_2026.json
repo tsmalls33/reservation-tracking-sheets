@@ -4,7 +4,7 @@
     "january_reservations": {
       "tab_name": "January",
       "start_range": "F11",
-      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision", "VAT"],
+      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision"],
       "column_mapping": {
         "Actividad": {"csv_field": "Actividad", "sheet_col_offset": 0, "skip_next": true},
         "Entrada": {"csv_field": "Entrada", "sheet_col_offset": 2},
@@ -12,10 +12,9 @@
         "Noches": {"csv_field": "Noches", "sheet_col_offset": 4},
         "Precio": {"csv_field": "Precio", "sheet_col_offset": 5},
         "Check In/Out": {"csv_field": "Check In/Out", "sheet_col_offset": 6},
-        "Comision": {"csv_field": "Comision", "sheet_col_offset": 7},
-        "VAT": {"csv_field": "VAT", "sheet_col_offset": 8}
+        "Comision": {"csv_field": "Comision", "sheet_col_offset": 7}
       },
-      "physical_columns": 9
+      "physical_columns": 8
     },
     "january_costs": {
       "tab_name": "January",
@@ -30,7 +29,7 @@
     "february_reservations": {
       "tab_name": "February",
       "start_range": "F11",
-      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision", "VAT"],
+      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision"],
       "column_mapping": {
         "Actividad": {"csv_field": "Actividad", "sheet_col_offset": 0, "skip_next": true},
         "Entrada": {"csv_field": "Entrada", "sheet_col_offset": 2},
@@ -38,10 +37,9 @@
         "Noches": {"csv_field": "Noches", "sheet_col_offset": 4},
         "Precio": {"csv_field": "Precio", "sheet_col_offset": 5},
         "Check In/Out": {"csv_field": "Check In/Out", "sheet_col_offset": 6},
-        "Comision": {"csv_field": "Comision", "sheet_col_offset": 7},
-        "VAT": {"csv_field": "VAT", "sheet_col_offset": 8}
+        "Comision": {"csv_field": "Comision", "sheet_col_offset": 7}
       },
-      "physical_columns": 9
+      "physical_columns": 8
     },
     "february_costs": {
       "tab_name": "February",
@@ -56,7 +54,7 @@
     "march_reservations": {
       "tab_name": "March",
       "start_range": "F11",
-      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision", "VAT"],
+      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision"],
       "column_mapping": {
         "Actividad": {"csv_field": "Actividad", "sheet_col_offset": 0, "skip_next": true},
         "Entrada": {"csv_field": "Entrada", "sheet_col_offset": 2},
@@ -64,10 +62,9 @@
         "Noches": {"csv_field": "Noches", "sheet_col_offset": 4},
         "Precio": {"csv_field": "Precio", "sheet_col_offset": 5},
         "Check In/Out": {"csv_field": "Check In/Out", "sheet_col_offset": 6},
-        "Comision": {"csv_field": "Comision", "sheet_col_offset": 7},
-        "VAT": {"csv_field": "VAT", "sheet_col_offset": 8}
+        "Comision": {"csv_field": "Comision", "sheet_col_offset": 7}
       },
-      "physical_columns": 9
+      "physical_columns": 8
     },
     "march_costs": {
       "tab_name": "March",
@@ -82,7 +79,7 @@
     "april_reservations": {
       "tab_name": "April",
       "start_range": "F11",
-      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision", "VAT"],
+      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision"],
       "column_mapping": {
         "Actividad": {"csv_field": "Actividad", "sheet_col_offset": 0, "skip_next": true},
         "Entrada": {"csv_field": "Entrada", "sheet_col_offset": 2},
@@ -90,10 +87,9 @@
         "Noches": {"csv_field": "Noches", "sheet_col_offset": 4},
         "Precio": {"csv_field": "Precio", "sheet_col_offset": 5},
         "Check In/Out": {"csv_field": "Check In/Out", "sheet_col_offset": 6},
-        "Comision": {"csv_field": "Comision", "sheet_col_offset": 7},
-        "VAT": {"csv_field": "VAT", "sheet_col_offset": 8}
+        "Comision": {"csv_field": "Comision", "sheet_col_offset": 7}
       },
-      "physical_columns": 9
+      "physical_columns": 8
     },
     "april_costs": {
       "tab_name": "April",
@@ -108,7 +104,7 @@
     "may_reservations": {
       "tab_name": "May",
       "start_range": "F11",
-      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision", "VAT"],
+      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision"],
       "column_mapping": {
         "Actividad": {"csv_field": "Actividad", "sheet_col_offset": 0, "skip_next": true},
         "Entrada": {"csv_field": "Entrada", "sheet_col_offset": 2},
@@ -116,10 +112,9 @@
         "Noches": {"csv_field": "Noches", "sheet_col_offset": 4},
         "Precio": {"csv_field": "Precio", "sheet_col_offset": 5},
         "Check In/Out": {"csv_field": "Check In/Out", "sheet_col_offset": 6},
-        "Comision": {"csv_field": "Comision", "sheet_col_offset": 7},
-        "VAT": {"csv_field": "VAT", "sheet_col_offset": 8}
+        "Comision": {"csv_field": "Comision", "sheet_col_offset": 7}
       },
-      "physical_columns": 9
+      "physical_columns": 8
     },
     "may_costs": {
       "tab_name": "May",
@@ -134,7 +129,7 @@
     "june_reservations": {
       "tab_name": "June",
       "start_range": "F11",
-      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision", "VAT"],
+      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision"],
       "column_mapping": {
         "Actividad": {"csv_field": "Actividad", "sheet_col_offset": 0, "skip_next": true},
         "Entrada": {"csv_field": "Entrada", "sheet_col_offset": 2},
@@ -142,10 +137,9 @@
         "Noches": {"csv_field": "Noches", "sheet_col_offset": 4},
         "Precio": {"csv_field": "Precio", "sheet_col_offset": 5},
         "Check In/Out": {"csv_field": "Check In/Out", "sheet_col_offset": 6},
-        "Comision": {"csv_field": "Comision", "sheet_col_offset": 7},
-        "VAT": {"csv_field": "VAT", "sheet_col_offset": 8}
+        "Comision": {"csv_field": "Comision", "sheet_col_offset": 7}
       },
-      "physical_columns": 9
+      "physical_columns": 8
     },
     "june_costs": {
       "tab_name": "June",
@@ -160,7 +154,7 @@
     "july_reservations": {
       "tab_name": "July",
       "start_range": "F11",
-      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision", "VAT"],
+      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision"],
       "column_mapping": {
         "Actividad": {"csv_field": "Actividad", "sheet_col_offset": 0, "skip_next": true},
         "Entrada": {"csv_field": "Entrada", "sheet_col_offset": 2},
@@ -168,10 +162,9 @@
         "Noches": {"csv_field": "Noches", "sheet_col_offset": 4},
         "Precio": {"csv_field": "Precio", "sheet_col_offset": 5},
         "Check In/Out": {"csv_field": "Check In/Out", "sheet_col_offset": 6},
-        "Comision": {"csv_field": "Comision", "sheet_col_offset": 7},
-        "VAT": {"csv_field": "VAT", "sheet_col_offset": 8}
+        "Comision": {"csv_field": "Comision", "sheet_col_offset": 7}
       },
-      "physical_columns": 9
+      "physical_columns": 8
     },
     "july_costs": {
       "tab_name": "July",
@@ -186,7 +179,7 @@
     "august_reservations": {
       "tab_name": "August",
       "start_range": "F11",
-      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision", "VAT"],
+      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision"],
       "column_mapping": {
         "Actividad": {"csv_field": "Actividad", "sheet_col_offset": 0, "skip_next": true},
         "Entrada": {"csv_field": "Entrada", "sheet_col_offset": 2},
@@ -194,10 +187,9 @@
         "Noches": {"csv_field": "Noches", "sheet_col_offset": 4},
         "Precio": {"csv_field": "Precio", "sheet_col_offset": 5},
         "Check In/Out": {"csv_field": "Check In/Out", "sheet_col_offset": 6},
-        "Comision": {"csv_field": "Comision", "sheet_col_offset": 7},
-        "VAT": {"csv_field": "VAT", "sheet_col_offset": 8}
+        "Comision": {"csv_field": "Comision", "sheet_col_offset": 7}
       },
-      "physical_columns": 9
+      "physical_columns": 8
     },
     "august_costs": {
       "tab_name": "August",
@@ -212,7 +204,7 @@
     "september_reservations": {
       "tab_name": "September",
       "start_range": "F11",
-      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision", "VAT"],
+      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision"],
       "column_mapping": {
         "Actividad": {"csv_field": "Actividad", "sheet_col_offset": 0, "skip_next": true},
         "Entrada": {"csv_field": "Entrada", "sheet_col_offset": 2},
@@ -220,10 +212,9 @@
         "Noches": {"csv_field": "Noches", "sheet_col_offset": 4},
         "Precio": {"csv_field": "Precio", "sheet_col_offset": 5},
         "Check In/Out": {"csv_field": "Check In/Out", "sheet_col_offset": 6},
-        "Comision": {"csv_field": "Comision", "sheet_col_offset": 7},
-        "VAT": {"csv_field": "VAT", "sheet_col_offset": 8}
+        "Comision": {"csv_field": "Comision", "sheet_col_offset": 7}
       },
-      "physical_columns": 9
+      "physical_columns": 8
     },
     "september_costs": {
       "tab_name": "September",
@@ -238,7 +229,7 @@
     "october_reservations": {
       "tab_name": "October",
       "start_range": "F11",
-      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision", "VAT"],
+      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision"],
       "column_mapping": {
         "Actividad": {"csv_field": "Actividad", "sheet_col_offset": 0, "skip_next": true},
         "Entrada": {"csv_field": "Entrada", "sheet_col_offset": 2},
@@ -246,10 +237,9 @@
         "Noches": {"csv_field": "Noches", "sheet_col_offset": 4},
         "Precio": {"csv_field": "Precio", "sheet_col_offset": 5},
         "Check In/Out": {"csv_field": "Check In/Out", "sheet_col_offset": 6},
-        "Comision": {"csv_field": "Comision", "sheet_col_offset": 7},
-        "VAT": {"csv_field": "VAT", "sheet_col_offset": 8}
+        "Comision": {"csv_field": "Comision", "sheet_col_offset": 7}
       },
-      "physical_columns": 9
+      "physical_columns": 8
     },
     "october_costs": {
       "tab_name": "October",
@@ -264,7 +254,7 @@
     "november_reservations": {
       "tab_name": "November",
       "start_range": "F11",
-      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision", "VAT"],
+      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision"],
       "column_mapping": {
         "Actividad": {"csv_field": "Actividad", "sheet_col_offset": 0, "skip_next": true},
         "Entrada": {"csv_field": "Entrada", "sheet_col_offset": 2},
@@ -272,10 +262,9 @@
         "Noches": {"csv_field": "Noches", "sheet_col_offset": 4},
         "Precio": {"csv_field": "Precio", "sheet_col_offset": 5},
         "Check In/Out": {"csv_field": "Check In/Out", "sheet_col_offset": 6},
-        "Comision": {"csv_field": "Comision", "sheet_col_offset": 7},
-        "VAT": {"csv_field": "VAT", "sheet_col_offset": 8}
+        "Comision": {"csv_field": "Comision", "sheet_col_offset": 7}
       },
-      "physical_columns": 9
+      "physical_columns": 8
     },
     "november_costs": {
       "tab_name": "November",
@@ -290,7 +279,7 @@
     "december_reservations": {
       "tab_name": "December",
       "start_range": "F11",
-      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision", "VAT"],
+      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision"],
       "column_mapping": {
         "Actividad": {"csv_field": "Actividad", "sheet_col_offset": 0, "skip_next": true},
         "Entrada": {"csv_field": "Entrada", "sheet_col_offset": 2},
@@ -298,10 +287,9 @@
         "Noches": {"csv_field": "Noches", "sheet_col_offset": 4},
         "Precio": {"csv_field": "Precio", "sheet_col_offset": 5},
         "Check In/Out": {"csv_field": "Check In/Out", "sheet_col_offset": 6},
-        "Comision": {"csv_field": "Comision", "sheet_col_offset": 7},
-        "VAT": {"csv_field": "VAT", "sheet_col_offset": 8}
+        "Comision": {"csv_field": "Comision", "sheet_col_offset": 7}
       },
-      "physical_columns": 9
+      "physical_columns": 8
     },
     "december_costs": {
       "tab_name": "December",
