@@ -1,13 +1,20 @@
+
 #!/usr/bin/env python3
 """
 Reservations CLI - Process & Upload Airbnb/Booking data to Google Sheets
 """
 
+import warnings
+import os
+
+# Suppress all warnings at startup
+warnings.filterwarnings('ignore')
+os.environ['PYTHONWARNINGS'] = 'ignore'
+
 import click
 import subprocess
 import sys
 from pathlib import Path
-import os
 
 PROJECT_ROOT = Path("/Users/thomas/dev/reservation-tracking-sheets")
 
@@ -51,9 +58,10 @@ def process(platform, csv_file, output):
     click.echo(f"🔄 Processing {platform} CSV: {csv_file}")
     click.echo(f"📤 Output: {output_file}")
     
+    # Show output in real-time (no capture_output)
     result = subprocess.run([
         sys.executable, str(script_path), csv_file, str(output_file)
-    ], check=True, capture_output=True, text=True)
+    ], check=True)
     
     click.echo(click.style("✅ Processing complete!", fg="green"))
 
@@ -81,7 +89,8 @@ def upload(csv_file, apartment, year, test, hard_replace):
         cmd.append('--hard-replace')
     
     click.echo(f"📤 Uploading {csv_file} → {apartment}_{year}{'_test' if test else ''}")
-    result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+    # Show output in real-time (no capture_output)
+    result = subprocess.run(cmd, check=True)
     click.echo(click.style("✅ Upload complete!", fg="green"))
 
 
@@ -107,6 +116,7 @@ def oneshot(csv_files, apartment, year, test, hard_replace):
         processed = temp_dir / f"{platform}_processed.csv"
         
         click.echo(f"🔄 Processing {platform}: {csv_file}")
+        # Show output in real-time
         subprocess.run([
             sys.executable, str(script_path), 
             str(csv_file), str(processed)
@@ -139,12 +149,18 @@ def oneshot(csv_files, apartment, year, test, hard_replace):
         cmd.append('--test')
     if hard_replace:
         cmd.append('--hard-replace')
-    
-    click.echo(f"📤 Uploading to {apartment} {year}...")
-    subprocess.run(cmd, check=True)
-    click.echo(click.style(f"✅ Complete! Uploaded to {apartment}_{year}{'_test' if test else ''}", fg="green"))
+
+    click.echo(f"\n📤 Uploading to {apartment} {year}...")
+    try:
+        # Show output in real-time (no capture_output)
+        result = subprocess.run(cmd, check=True)
+        click.echo(click.style(f"\n✅ Complete! Uploaded to {apartment}_{year}{'_test' if test else ''}", fg="green"))
+    except subprocess.CalledProcessError as e:
+        click.echo(click.style(f"\n❌ Upload failed!", fg="red"))
+        sys.exit(1)
 
 
 if __name__ == '__main__':
     cli()
+
 
