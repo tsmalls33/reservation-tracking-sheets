@@ -1,0 +1,126 @@
+{
+  "spreadsheet_id": "1t2poV08v6RvVkfVzPd2YC4lwUgk6-2eBjJTwvhWF2GE",
+  "tabs": {
+    "january_reservations": {
+      "tab_name": "January",
+      "start_range": "F11",
+      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision", "VAT"]
+    },
+    "january_costs": {
+      "tab_name": "January",
+      "start_range": "B6",
+      "columns": ["Cost_Name", "Amount"]
+    },
+    "february_reservations": {
+      "tab_name": "February",
+      "start_range": "F11",
+      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision", "VAT"]
+    },
+    "february_costs": {
+      "tab_name": "February",
+      "start_range": "B6",
+      "columns": ["Cost_Name", "Amount"]
+    },
+    "march_reservations": {
+      "tab_name": "March",
+      "start_range": "F11",
+      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision", "VAT"]
+    },
+    "march_costs": {
+      "tab_name": "March",
+      "start_range": "B6",
+      "columns": ["Cost_Name", "Amount"]
+    },
+    "april_reservations": {
+      "tab_name": "April",
+      "start_range": "F11",
+      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision", "VAT"]
+    },
+    "april_costs": {
+      "tab_name": "April",
+      "start_range": "B6",
+      "columns": ["Cost_Name", "Amount"]
+    },
+    "may_reservations": {
+      "tab_name": "May",
+      "start_range": "F11",
+      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision", "VAT"]
+    },
+    "may_costs": {
+      "tab_name": "May",
+      "start_range": "B6",
+      "columns": ["Cost_Name", "Amount"]
+    },
+    "june_reservations": {
+      "tab_name": "June",
+      "start_range": "F11",
+      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision", "VAT"]
+    },
+    "june_costs": {
+      "tab_name": "June",
+      "start_range": "B6",
+      "columns": ["Cost_Name", "Amount"]
+    },
+    "july_reservations": {
+      "tab_name": "July",
+      "start_range": "F11",
+      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision", "VAT"]
+    },
+    "july_costs": {
+      "tab_name": "July",
+      "start_range": "B6",
+      "columns": ["Cost_Name", "Amount"]
+    },
+    "august_reservations": {
+      "tab_name": "August",
+      "start_range": "F11",
+      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision", "VAT"]
+    },
+    "august_costs": {
+      "tab_name": "August",
+      "start_range": "B6",
+      "columns": ["Cost_Name", "Amount"]
+    },
+    "september_reservations": {
+      "tab_name": "September",
+      "start_range": "F11",
+      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision", "VAT"]
+    },
+    "september_costs": {
+      "tab_name": "September",
+      "start_range": "B6",
+      "columns": ["Cost_Name", "Amount"]
+    },
+    "october_reservations": {
+      "tab_name": "October",
+      "start_range": "F11",
+      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision", "VAT"]
+    },
+    "october_costs": {
+      "tab_name": "October",
+      "start_range": "B6",
+      "columns": ["Cost_Name", "Amount"]
+    },
+    "november_reservations": {
+      "tab_name": "November",
+      "start_range": "F11",
+      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision", "VAT"]
+    },
+    "november_costs": {
+      "tab_name": "November",
+      "start_range": "B6",
+      "columns": ["Cost_Name", "Amount"]
+    },
+    "december_reservations": {
+      "tab_name": "December",
+      "start_range": "F11",
+      "columns": ["Actividad", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision", "VAT"]
+    },
+    "december_costs": {
+      "tab_name": "December",
+      "start_range": "B6",
+      "columns": ["Cost_Name", "Amount"]
+    }
+  }
+}
+

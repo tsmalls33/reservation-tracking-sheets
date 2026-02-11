@@ -1,37 +1,29 @@
-# 🚀 Airbnb/Booking → Google Sheets Uploader
+🚀 Airbnb/Booking → Google Sheets Uploader
 
-## USAGE
-
-  python scripts/upload_to_sheets.py --csv data/processed.csv --apartment part_alta --year 2026
+USAGE:
+  python scripts/upload_to_sheets.py --csv data/processed.csv --apartment mediona --year 2026
   python scripts/upload_to_sheets.py --csv data/processed.csv --hard-replace
 
-## MODES
-
+MODES:
   Normal (default):    Clear only months present in CSV
   --hard-replace:      Clear ALL reservation tabs first
 
-## EXAMPLES
-
-### Monthly update (auto-detects January data)
-
+EXAMPLES:
+  # Monthly update (auto-detects January data)
   python scripts/upload_to_sheets.py --csv data/processed/january.csv
   
-### Full year reload
-
+  # Full year reload
   python scripts/upload_to_sheets.py --csv data/all_2026.csv --hard-replace
   
-### Custom apartment
+  # Custom apartment
+  python scripts/upload_to_sheets.py --csv data.csv --apartment mediona --year 2025
 
-  python scripts/upload_to_sheets.py --csv data.csv --apartment part_alta --year 2025
-
-## REQUIREMENTS
-
-  ✓ config/part_alta_2026.json exists
+REQUIREMENTS:
+  ✓ config/mediona_2026.json exists
   ✓ credentials/service_account.json exists
   ✓ CSV has columns: Actividad, Entrada, Salida, Noches, Precio, Check In/Out, Comision, VAT
 
-## FLOW
-
+FLOW:
   1. Auto-detects months from CSV check-in dates
   2. Clears target tabs (normal) OR all tabs (hard-replace)
   3. Uploads data to correct month tabs
