@@ -145,6 +145,8 @@ def clear_exact_range(worksheet, start_cell, num_cols, num_rows):
 def build_row_from_mapping(row_data, column_mapping, columns):
     """Build a row list dynamically based on column_mapping config.
     
+    Supports both single field mapping and calculated fields (e.g., sum of multiple fields).
+    
     Args:
         row_data: pandas Series with CSV data
         column_mapping: dict mapping column names to their config
@@ -162,11 +164,40 @@ def build_row_from_mapping(row_data, column_mapping, columns):
             continue
         
         col_cfg = column_mapping[col_name]
-        csv_field = col_cfg['csv_field']
         offset = col_cfg['sheet_col_offset']
         
-        # Get value from CSV, handle missing fields
-        value = str(row_data.get(csv_field, '')) if csv_field in row_data.index else ''
+        # Check if this is a calculated field (multiple csv_fields with operation)
+        if 'csv_fields' in col_cfg and 'operation' in col_cfg:
+            csv_fields = col_cfg['csv_fields']
+            operation = col_cfg['operation']
+            
+            if operation == 'sum':
+                # Sum multiple CSV fields
+                values = []
+                for field in csv_fields:
+                    if field in row_data.index:
+                        # Try to convert to float, default to 0 if fails
+                        try:
+                            val = float(row_data[field]) if pd.notna(row_data[field]) else 0.0
+                        except (ValueError, TypeError):
+                            val = 0.0
+                        values.append(val)
+                    else:
+                        values.append(0.0)
+                value = sum(values)
+            else:
+                # Unknown operation, fallback to empty
+                value = ''
+        
+        elif 'csv_field' in col_cfg:
+            # Single field mapping (existing behavior)
+            csv_field = col_cfg['csv_field']
+            value = str(row_data.get(csv_field, '')) if csv_field in row_data.index else ''
+        
+        else:
+            # No valid field mapping
+            value = ''
+        
         row_list[offset] = value
     
     return row_list
