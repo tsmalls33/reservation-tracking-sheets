@@ -17,6 +17,22 @@ warnings.filterwarnings('ignore', category=UserWarning)
 
 PROJECT_ROOT = Path("/Users/thomas/dev/reservation-tracking-sheets")
 
+# Month name translations
+MONTH_NAMES = {
+    'january': {'en': 'January', 'es': 'Enero'},
+    'february': {'en': 'February', 'es': 'Febrero'},
+    'march': {'en': 'March', 'es': 'Marzo'},
+    'april': {'en': 'April', 'es': 'Abril'},
+    'may': {'en': 'May', 'es': 'Mayo'},
+    'june': {'en': 'June', 'es': 'Junio'},
+    'july': {'en': 'July', 'es': 'Julio'},
+    'august': {'en': 'August', 'es': 'Agosto'},
+    'september': {'en': 'September', 'es': 'Septiembre'},
+    'october': {'en': 'October', 'es': 'Octubre'},
+    'november': {'en': 'November', 'es': 'Noviembre'},
+    'december': {'en': 'December', 'es': 'Diciembre'}
+}
+
 def print_header(title, char="="):
     """Print a styled header."""
     print(f"\n{char * 70}")
@@ -41,6 +57,20 @@ def print_info(message, indent=1):
 def get_tab_name(config, tab_key):
     """Get tab name with whitespace stripped."""
     return config['tabs'][tab_key]['tab_name'].strip()
+
+def get_month_name_for_display(month_key, language='en'):
+    """Get the display name for a month in the specified language.
+    
+    Args:
+        month_key: Month key like 'january', 'february', etc.
+        language: 'en' for English or 'es' for Spanish
+    
+    Returns:
+        Capitalized month name in the specified language
+    """
+    if month_key in MONTH_NAMES:
+        return MONTH_NAMES[month_key].get(language, MONTH_NAMES[month_key]['en'])
+    return month_key.capitalize()
 
 def get_worksheet_fuzzy(spreadsheet, target_name):
     """Find worksheet by name, ignoring whitespace."""
@@ -71,6 +101,14 @@ def load_config(apartment_name, year, test_mode=False):
         print_success(f"Config loaded")
         print_info(f"Spreadsheet: {config['spreadsheet_id'][:20]}...")
         print_info(f"Tabs defined: {len(config.get('tabs', {}))}")
+        
+        # Detect language from config or default to English
+        language = config.get('language', 'en')
+        if language not in ['en', 'es']:
+            language = 'en'
+        config['_language'] = language
+        print_info(f"Language: {language.upper()}")
+        
         return config
     else:
         available = list_config_files()
@@ -207,6 +245,9 @@ def upload_reservations(client, config, spreadsheet_id, csv_file, hard_replace=F
     
     print_header("📊 UPLOAD SUMMARY", "=")
     
+    # Get language setting
+    language = config.get('_language', 'en')
+    
     # Read CSV
     df = pd.read_csv(csv_file)
     print_step("📂", f"Loaded {len(df)} reservations from CSV")
@@ -217,7 +258,8 @@ def upload_reservations(client, config, spreadsheet_id, csv_file, hard_replace=F
     
     # Detect months
     target_tabs, month_names = detect_months_from_csv(csv_file)
-    print_step("📅", f"Target months: {', '.join([m.capitalize() for m in month_names])}")
+    month_display_names = [get_month_name_for_display(m, language) for m in month_names]
+    print_step("📅", f"Target months: {', '.join(month_display_names)}")
     
     # Open spreadsheet
     print_step("🔗", "Connecting to Google Sheets...")
@@ -273,15 +315,18 @@ def upload_reservations(client, config, spreadsheet_id, csv_file, hard_replace=F
             continue
         
         month_data = df[df['month_name'] == tab_key.split('_')[0]]
-        month_name = month_data['month_name'].iloc[0].capitalize() if not month_data.empty else tab_key.split('_')[0].capitalize()
+        
+        # Get month name in the configured language
+        month_key = tab_key.split('_')[0]
+        month_display = get_month_name_for_display(month_key, language)
         
         try:
             worksheet = get_worksheet_fuzzy(spreadsheet, tab_name)
         except gspread.exceptions.WorksheetNotFound:
             continue
 
-        # Update B2 with month name
-        worksheet.update(values=[[month_name]], range_name='B2', value_input_option='USER_ENTERED')
+        # Update B2 with month name in configured language
+        worksheet.update(values=[[month_display]], range_name='B2', value_input_option='USER_ENTERED')
         
         if len(month_data) > 0:
             columns = tab_config['columns']
@@ -303,7 +348,7 @@ def upload_reservations(client, config, spreadsheet_id, csv_file, hard_replace=F
             
             start_cell = tab_config['start_range']
             worksheet.update(values=processed_rows, range_name=start_cell, value_input_option='USER_ENTERED')
-            print_step("✓", f"{month_name}: {len(processed_rows)} reservations", indent=1)
+            print_step("✓", f"{month_display}: {len(processed_rows)} reservations", indent=1)
             total_uploaded += len(processed_rows)
     
     print_header("🎉 COMPLETE", "=")
