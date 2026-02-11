@@ -8,9 +8,11 @@ import argparse
 from datetime import datetime
 import os
 
+PROJECT_ROOT = Path("/Users/thomas/dev/reservation-tracking-sheets")
+
 def list_config_files():
     """List all JSON config files in config/ directory."""
-    config_dir = Path('config')
+    config_dir = PROJECT_ROOT / "config"
     if config_dir.exists():
         configs = [f for f in config_dir.glob('*.json')]
         return [f.name for f in configs]
@@ -19,7 +21,7 @@ def list_config_files():
 def load_config(apartment_name, year, test_mode=False):
     """Load config with smart defaults and test mode support."""
     suffix = '_test' if test_mode else ''
-    config_path = f"config/{apartment_name}_{year}{suffix}.json"
+    config_path = PROJECT_ROOT / f"config/{apartment_name}_{year}{suffix}.json"
     
     if Path(config_path).exists():
         print(f"📁 Using config: {config_path}")
@@ -41,8 +43,11 @@ def authenticate_sheets():
         'https://spreadsheets.google.com/feeds',
         'https://www.googleapis.com/auth/drive'
     ]
-    creds = Credentials.from_service_account_file('credentials/service_account.json', scopes=scope)
-    return gspread.authorize(creds)
+    creds_path = PROJECT_ROOT / 'credentials/service_account.json'  # ← ABSOLUTE PATH
+    
+    creds = Credentials.from_service_account_file(str(creds_path), scopes=scope)
+    client = gspread.authorize(creds)
+    return client
 
 def detect_months_from_csv(csv_file):
     """Auto-detect which months are present in CSV based on check-in dates."""

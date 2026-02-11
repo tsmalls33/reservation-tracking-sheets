@@ -66,7 +66,7 @@ def process_booking_csv(input_file, output_file=None, cleaning_fee=25.0):
 if __name__ == "__main__":
     # Example usage
     input_file = sys.argv[1] if len(sys.argv) > 1 else input("Enter path to Booking.com CSV export: ")
-    output_file = "data/processed/booking_processed.csv"
+    output_file = sys.argv[2] if len(sys.argv) > 2 else None
     
     df = process_booking_csv(input_file, output_file)
     print("\nSample output:")
