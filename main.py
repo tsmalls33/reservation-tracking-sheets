@@ -501,7 +501,9 @@ def config_delete():
               help='Months (jan,feb or q1,q2 or all)')
 @click.option('--year', '-y', type=int, default=2026, help='Year (default: 2026)')
 @click.option('--email', '-e', help='Email to share invoice with')
-def invoice_create(apartment, months, year, email):
+@click.option('--test', is_flag=True,
+              help='Use test reservation config and TEST_ invoice numbering')
+def invoice_create(apartment, months, year, email, test):
     """Create an invoice from reservation data.
     
     Extracts financial data from specified months and generates
@@ -516,8 +518,11 @@ def invoice_create(apartment, months, year, email):
     
     \b
     Examples:
-      # Single month
+      # Production invoice
       reservations invoice create -a mediona -m jan -y 2025
+      
+      # Test invoice (uses test config, TEST_ numbering)
+      reservations invoice create -a mediona -m jan -y 2025 --test
       
       # Multiple months
       reservations invoice create -a mediona -m jan,feb,mar -y 2025
@@ -535,7 +540,9 @@ def invoice_create(apartment, months, year, email):
         # Parse months
         month_list = parse_months(months)
         
-        click.echo(f"\n📅 Months: {', '.join([m.capitalize() for m in month_list])}")
+        mode_label = click.style('[TEST]', fg='yellow') if test else click.style('[PROD]', fg='green')
+        click.echo(f"\n{mode_label} Creating invoice...")
+        click.echo(f"📅 Months: {', '.join([m.capitalize() for m in month_list])}")
         
         # Call invoice creation script
         invoice_script = PROJECT_ROOT / "scripts/create_invoice.py"
@@ -545,6 +552,9 @@ def invoice_create(apartment, months, year, email):
             '--months', ','.join(month_list),
             '--year', str(year)
         ]
+        
+        if test:
+            cmd.append('--test')
         
         if email:
             cmd.extend(['--email', email])
@@ -614,12 +624,15 @@ def invoice_list(apartment):
     click.echo("="*70)
     
     for inv in all_invoices:
-        click.echo(f"\n📎 {click.style(inv['invoice_number'], fg='cyan', bold=True)}")
+        is_test = inv.get('test_mode', False)
+        badge = click.style('[TEST]', fg='yellow') if is_test else click.style('[PROD]', fg='green')
+        
+        click.echo(f"\n{badge} {click.style(inv['invoice_number'], fg='cyan', bold=True)}")
         click.echo(f"   Apartment: {inv['apartment']}")
         click.echo(f"   Months: {', '.join([m.capitalize() for m in inv['months']])}")
         click.echo(f"   Year: {inv['year']}")
         click.echo(f"   Created: {inv['created_at'][:10]}")
-        click.echo(f"   🔗 {inv['spreadsheet_url']}")
+        click.echo(f"   🔗 {inv.get('sheet_url', 'N/A')}")
     
     click.echo(f"\n📊 Total: {len(all_invoices)} invoice(s)")
     click.echo()
