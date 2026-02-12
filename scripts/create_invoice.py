@@ -6,6 +6,7 @@ Invoice Creation Script - Generate invoices from apartment reservation data
 import gspread
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
+from googleapiclient.http import MediaInMemoryUpload
 import pandas as pd
 import json
 import sys
@@ -266,6 +267,54 @@ def copy_template_invoice(client, template_id, invoice_number, owner_email=None)
     
     return spreadsheet
 
+def export_invoice_to_pdf(spreadsheet_id, invoice_number):
+    """Export invoice spreadsheet to PDF in the same folder.
+    
+    Args:
+        spreadsheet_id: ID of the spreadsheet to export
+        invoice_number: Invoice number for the filename
+        
+    Returns:
+        tuple: (PDF file ID, PDF web view link)
+    """
+    creds = get_credentials()
+    drive_service = build('drive', 'v3', credentials=creds)
+    
+    # Get the spreadsheet's parent folder
+    file_info = drive_service.files().get(
+        fileId=spreadsheet_id,
+        fields='parents'
+    ).execute()
+    
+    parent_folders = file_info.get('parents', [])
+    
+    # Export as PDF
+    pdf_content = drive_service.files().export(
+        fileId=spreadsheet_id,
+        mimeType='application/pdf'
+    ).execute()
+    
+    # Create PDF file metadata
+    file_metadata = {
+        'name': f'Invoice {invoice_number}.pdf',
+        'mimeType': 'application/pdf'
+    }
+    
+    # Put in same folder as spreadsheet
+    if parent_folders:
+        file_metadata['parents'] = parent_folders
+    
+    # Upload the PDF
+    media = MediaInMemoryUpload(pdf_content, mimetype='application/pdf')
+    
+    pdf_file = drive_service.files().create(
+        body=file_metadata,
+        media_body=media,
+        fields='id,webViewLink'
+    ).execute()
+    
+    return pdf_file['id'], pdf_file.get('webViewLink', '')
+
 def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoice_number, df):
     """Populate invoice with data."""
     worksheet = spreadsheet.sheet1  # Assume first sheet
@@ -389,6 +438,15 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     print_step("✏️", "Populating invoice...")
     populate_invoice(client, new_invoice, invoice_config, apartment_info, invoice_number, df)
     
+    # Export to PDF
+    print_step("📄", "Exporting to PDF...")
+    try:
+        pdf_id, pdf_link = export_invoice_to_pdf(new_invoice.id, invoice_number)
+        print_step("✅", f"PDF created")
+    except Exception as e:
+        print_step("⚠️", f"Could not export to PDF: {e}")
+        pdf_id, pdf_link = None, None
+    
     # Prepare email list (always include owner, plus any additional)
     emails_to_share = []
     if owner_email:
@@ -400,6 +458,10 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     if emails_to_share:
         print_step("📧", "Sharing invoice...")
         share_invoice(new_invoice.id, emails_to_share)
+        
+        # Also share PDF if created
+        if pdf_id:
+            share_invoice(pdf_id, emails_to_share)
     
     # Save metadata
     metadata = {
@@ -411,6 +473,8 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
         'created_at': datetime.now().isoformat(),
         'spreadsheet_id': new_invoice.id,
         'spreadsheet_url': new_invoice.url,
+        'pdf_id': pdf_id,
+        'pdf_url': pdf_link,
         'shared_with': emails_to_share
     }
     save_invoice_metadata(apartment, invoice_number, metadata)
@@ -419,6 +483,9 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     print(f"Invoice Number: {invoice_number}")
     print(f"\n🔗 Open in Google Sheets:")
     print(f"   {new_invoice.url}")
+    if pdf_link:
+        print(f"\n📄 View PDF:")
+        print(f"   {pdf_link}")
     print(f"\n🆔 Spreadsheet ID: {new_invoice.id}")
     if emails_to_share:
         print(f"\n📤 Shared with: {', '.join(emails_to_share)}")
