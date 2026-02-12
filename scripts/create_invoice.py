@@ -111,25 +111,6 @@ def parse_financial_value(value):
         print(f"   ⚠️  Warning: Could not parse '{value}', using 0.0")
         return 0.0
 
-def format_financial_value(value):
-    """Format a float as a financial string (European format with comma as decimal).
-    
-    Args:
-        value: Numeric value
-        
-    Returns:
-        str: Formatted string like "1.234,56"
-    """
-    # Format with 2 decimal places and thousands separator
-    # Python's format uses dot as decimal, so we'll swap after
-    formatted = f"{value:,.2f}"  # e.g., "1,234.56"
-    
-    # Swap: comma -> temp, dot -> comma, temp -> dot
-    # Result: "1.234,56" (European format)
-    formatted = formatted.replace(',', 'TEMP').replace('.', ',').replace('TEMP', '.')
-    
-    return formatted
-
 def get_next_invoice_number(apartment, invoice_code, test=False):
     """Generate next invoice number for apartment.
     
@@ -409,21 +390,19 @@ def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoic
     range_name = f"{table_start_col}{table_start_row}:{end_col}{end_row}"
     worksheet.update(values=table_data, range_name=range_name)
     
-    # Write total cells separately (if defined in mapping)
+    # Write total cells separately as plain floats (if defined in mapping)
+    # This preserves the cell's number formatting
     if 'total_rent_cell' in mapping:
-        formatted_rent = format_financial_value(totals['rent'])
-        worksheet.update(values=[[formatted_rent]], range_name=mapping['total_rent_cell'])
-        print(f"   → Total Rent ({mapping['total_rent_cell']}): {formatted_rent}")
+        worksheet.update(values=[[totals['rent']]], range_name=mapping['total_rent_cell'])
+        print(f"   → Total Rent ({mapping['total_rent_cell']}): {totals['rent']:.2f}")
     
     if 'total_profit_cell' in mapping:
-        formatted_profit = format_financial_value(totals['profit'])
-        worksheet.update(values=[[formatted_profit]], range_name=mapping['total_profit_cell'])
-        print(f"   → Total Profit ({mapping['total_profit_cell']}): {formatted_profit}")
+        worksheet.update(values=[[totals['profit']]], range_name=mapping['total_profit_cell'])
+        print(f"   → Total Profit ({mapping['total_profit_cell']}): {totals['profit']:.2f}")
     
     if 'total_fee_cell' in mapping:
-        formatted_fee = format_financial_value(totals['fee'])
-        worksheet.update(values=[[formatted_fee]], range_name=mapping['total_fee_cell'])
-        print(f"   → Total Fee ({mapping['total_fee_cell']}): {formatted_fee}")
+        worksheet.update(values=[[totals['fee']]], range_name=mapping['total_fee_cell'])
+        print(f"   → Total Fee ({mapping['total_fee_cell']}): {totals['fee']:.2f}")
 
 def save_invoice_metadata(apartment, invoice_number, invoice_data):
     """Save invoice metadata locally."""
@@ -484,9 +463,9 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     # Create DataFrame and calculate totals
     df, totals = create_invoice_dataframe(month_data_list)
     print_step("✅", "Data aggregated")
-    print(f"   Total Rent: {format_financial_value(totals['rent'])}")
-    print(f"   Total Profit: {format_financial_value(totals['profit'])}")
-    print(f"   Total Fee: {format_financial_value(totals['fee'])}")
+    print(f"   Total Rent: {totals['rent']:.2f}")
+    print(f"   Total Profit: {totals['profit']:.2f}")
+    print(f"   Total Fee: {totals['fee']:.2f}")
     
     # Copy template
     print_step("📋", "Copying invoice template...")
