@@ -19,6 +19,7 @@ import subprocess
 import sys
 import json
 import shutil
+import re
 from pathlib import Path
 from collections import defaultdict
 
@@ -76,7 +77,15 @@ def detect_platform(filename):
     # Check filename patterns
     if any(x in fn_lower for x in ['airbnb', 'confirmación', 'hm']):
         return 'airbnb'
+    
+    # Booking.com patterns:
+    # - booking, reservation, invoice keywords
+    # - Check-in YYYY-MM-DD to YYYY-MM-DD.xls pattern
     if any(x in fn_lower for x in ['booking', 'reservation', 'invoice']):
+        return 'booking'
+    
+    # Match: Check-in 2025-10-01 to 2025-12-31.xls
+    if re.match(r'check-in\s+\d{4}-\d{2}-\d{2}\s+to\s+\d{4}-\d{2}-\d{2}\.(xls|xlsx|csv)', fn_lower):
         return 'booking'
     
     # Quick content check if filename doesn't match
@@ -91,7 +100,8 @@ def detect_platform(filename):
     
     raise ValueError(
         f"Cannot detect platform for: {filename}\n"
-        f"Expected 'airbnb' or 'booking' in filename or content."
+        f"Expected 'airbnb' or 'booking' in filename or content.\n"
+        f"Booking files typically named: 'Check-in YYYY-MM-DD to YYYY-MM-DD.xls'"
     )
 
 
