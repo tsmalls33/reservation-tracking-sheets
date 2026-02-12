@@ -7,21 +7,37 @@
     "mediona": {
       "invoice_code": "MED",
       "client_name": "Devorah Tellechea & Thomas Smallwood",
+      "client_address": "YOUR_ADDRESS_HERE",
+      "client_zip_code": "YOUR_ZIP_CODE",
+      "client_city": "YOUR_CITY",
+      "client_id": "YOUR_ID_NUMBER",
       "property_name": "Apartamento Mediona"
     },
     "sant-domenec": {
       "invoice_code": "SDOM",
       "client_name": "Alba",
+      "client_address": "YOUR_ADDRESS_HERE",
+      "client_zip_code": "YOUR_ZIP_CODE",
+      "client_city": "YOUR_CITY",
+      "client_id": "YOUR_ID_NUMBER",
       "property_name": "Apartamento Sant Domènec"
     },
     "granada": {
       "invoice_code": "GRAN", 
-      "client_name": "Tetiana", 
+      "client_name": "Tetiana",
+      "client_address": "YOUR_ADDRESS_HERE",
+      "client_zip_code": "YOUR_ZIP_CODE",
+      "client_city": "YOUR_CITY",
+      "client_id": "YOUR_ID_NUMBER",
       "property_name": "Apartamento Granada"
     },
     "duplex": {
       "invoice_code": "DUP",
-      "client_name": "TRANSWALTER S.L.", 
+      "client_name": "TRANSWALTER S.L.",
+      "client_address": "YOUR_ADDRESS_HERE",
+      "client_zip_code": "YOUR_ZIP_CODE",
+      "client_city": "YOUR_CITY",
+      "client_id": "YOUR_ID_NUMBER",
       "property_name": "Plaza Sant Joan 17"
     }
   },
@@ -33,12 +49,15 @@
   },
   "invoice_mapping": {
     "invoice_number": "B16",
+    "invoice_date": "B14",
     "client_name": "E7",
+    "client_address": "E8",
+    "client_zip_code": "E9",
+    "client_city": "E10",
+    "client_id": "E11",
     "property_name": "B22",
     "table_start_row": 26,
     "table_start_col": "A",
-    "total_rent_cell": "",
-    "total_profit_cell": "",
-    "total_fee_cell": "H36"
+    "commission_total_cell": "H36"
   }
 }
