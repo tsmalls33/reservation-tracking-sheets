@@ -246,14 +246,13 @@ def create_invoice_dataframe(month_data_list):
     # Return DataFrame without TOTAL row, and the commission total separately
     return df, commission_total
 
-def generate_pdf_export_link(spreadsheet_id, sheet_gid='0'):
+def generate_pdf_export_link(spreadsheet_id):
     """Generate a direct link to export the spreadsheet as PDF.
     
     Uses Google Sheets export endpoint with minimal URL parameters.
     
     Args:
         spreadsheet_id: ID of the spreadsheet
-        sheet_gid: Sheet tab ID (gid) to export. Defaults to '0' (first sheet)
         
     Returns:
         str: Direct PDF download URL
@@ -264,8 +263,7 @@ def generate_pdf_export_link(spreadsheet_id, sheet_gid='0'):
     # Minimal URL parameters
     params = {
         'format': 'pdf',
-        'size': 'A4',
-        'gid': sheet_gid
+        'size': 'A4'
     }
     
     return f"{base_url}?{urlencode(params)}"
@@ -421,7 +419,6 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     apartment_info = invoice_config['apartments'][apartment]
     owner_email = invoice_config.get('owner_email')
     template_id = invoice_config['template_sheet_id']
-    sheet_gid = invoice_config.get('sheet_gid', '0')  # Default to first sheet if not specified
     
     if not owner_email or owner_email == 'YOUR_EMAIL@example.com':
         print_step("⚠️", "Warning: owner_email not configured in config/invoices.json")
@@ -471,9 +468,9 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     print_step("✏️", "Populating invoice...")
     populate_invoice(client, invoice_sheet, invoice_config, apartment_info, invoice_number, invoice_date, df, commission_total)
     
-    # Generate PDF export link with sheet_gid from config
+    # Generate PDF export link
     print_step("📄", "Generating PDF export link...")
-    pdf_link = generate_pdf_export_link(invoice_sheet.id, sheet_gid)
+    pdf_link = generate_pdf_export_link(invoice_sheet.id)
     print_step("✅", "PDF export link ready")
     
     # Prepare email list (always include owner, plus any additional)
