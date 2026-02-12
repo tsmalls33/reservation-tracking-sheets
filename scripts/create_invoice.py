@@ -136,18 +136,24 @@ def extract_month_data(client, apartment_config, invoice_config, month_key, year
         value = worksheet.acell(cell).value
         # Clean and convert to float if numeric
         try:
-            # Remove currency symbols and convert
-            clean_value = value.replace('€', '').replace(',', '.').strip() if value else '0'
-            data[key] = float(clean_value)
-        except:
-            data[key] = value
+            if not value or value.strip() == '':
+                # Empty cell
+                data[key] = 0.0
+            else:
+                # Remove currency symbols and convert
+                clean_value = value.replace('€', '').replace(',', '.').strip()
+                data[key] = float(clean_value)
+        except (ValueError, AttributeError) as e:
+            # If conversion fails, default to 0.0
+            print(f"   ⚠️  Warning: Could not convert '{value}' in cell {cell} ({key}), using 0.0")
+            data[key] = 0.0
     
     return {
         'month': MONTH_NAMES[month_key][language],
-        'rent': data.get('renta_mensual', 0),
-        'profit': data.get('ganancia_mensual', 0),
-        'fee_percent': data.get('percentage', 0),
-        'fee_amount': data.get('comision_devomart', 0)
+        'rent': data.get('renta_mensual', 0.0),
+        'profit': data.get('ganancia_mensual', 0.0),
+        'fee_percent': data.get('percentage', 0.0),
+        'fee_amount': data.get('comision_devomart', 0.0)
     }
 
 def create_invoice_dataframe(month_data_list):
