@@ -25,6 +25,22 @@ from collections import defaultdict
 PROJECT_ROOT = Path("/Users/thomas/dev/reservation-tracking-sheets")
 CONFIG_DIR = PROJECT_ROOT / "config"
 
+# Month name translations
+MONTH_NAMES = {
+    'january': {'en': 'January', 'es': 'Enero'},
+    'february': {'en': 'February', 'es': 'Febrero'},
+    'march': {'en': 'March', 'es': 'Marzo'},
+    'april': {'en': 'April', 'es': 'Abril'},
+    'may': {'en': 'May', 'es': 'Mayo'},
+    'june': {'en': 'June', 'es': 'Junio'},
+    'july': {'en': 'July', 'es': 'Julio'},
+    'august': {'en': 'August', 'es': 'Agosto'},
+    'september': {'en': 'September', 'es': 'Septiembre'},
+    'october': {'en': 'October', 'es': 'Octubre'},
+    'november': {'en': 'November', 'es': 'Noviembre'},
+    'december': {'en': 'December', 'es': 'Diciembre'}
+}
+
 
 def detect_platform(filename):
     """Automatically detect if a CSV is from Airbnb or Booking.com.
@@ -92,6 +108,43 @@ def list_config_files():
     return dict(configs)
 
 
+def translate_tab_names(config_data, target_language):
+    """Translate all tab_name values in config to target language.
+    
+    Args:
+        config_data: Config dictionary
+        target_language: 'en' or 'es'
+    
+    Returns:
+        Updated config_data with translated tab names
+    """
+    if 'tabs' not in config_data:
+        return config_data
+    
+    # Build reverse lookup: month name -> month key
+    month_lookup = {}
+    for month_key, translations in MONTH_NAMES.items():
+        month_lookup[translations['en'].lower()] = month_key
+        month_lookup[translations['es'].lower()] = month_key
+    
+    # Update each tab's tab_name
+    for tab_key, tab_config in config_data['tabs'].items():
+        if 'tab_name' not in tab_config:
+            continue
+        
+        current_tab_name = tab_config['tab_name'].strip()
+        
+        # Find the month key from current tab name
+        month_key = month_lookup.get(current_tab_name.lower())
+        
+        if month_key:
+            # Translate to target language
+            new_tab_name = MONTH_NAMES[month_key][target_language]
+            tab_config['tab_name'] = new_tab_name
+    
+    return config_data
+
+
 @click.group()
 @click.version_option("2.0.0")
 def cli():
@@ -126,7 +179,7 @@ def config():
     """Manage configuration files for apartments.
     
     Create new configs from templates, list existing configs,
-    and manage spreadsheet settings.
+    delete configs, and manage spreadsheet settings.
     """
     pass
 
@@ -184,7 +237,7 @@ def config_create():
     1. Choosing a template config to clone
     2. Setting apartment name and year
     3. Configuring Google Sheet ID
-    4. Setting language (EN/ES)
+    4. Setting language (EN/ES) - automatically translates tab names
     """
     configs = list_config_files()
     
@@ -255,6 +308,12 @@ def config_create():
     new_config['spreadsheet_id'] = new_sheet_id
     new_config['language'] = new_language.lower()
     
+    # Translate tab names if language changed
+    if new_language.lower() != current_lang.lower():
+        click.echo(f"\n🔄 Translating tab names from {current_lang.upper()} to {new_language.upper()}...")
+        new_config = translate_tab_names(new_config, new_language.lower())
+        click.echo(click.style("   ✓ Tab names translated", fg="green"))
+    
     # Generate filename
     suffix = '_test' if is_test else ''
     new_filename = f"{apartment_name}_{year}{suffix}.json"
@@ -280,6 +339,96 @@ def config_create():
     click.echo(f"Language: {new_language.upper()}")
     click.echo(f"Type: {'Test' if is_test else 'Production'}")
     click.echo(f"\nUse with: {click.style(f'reservations upload file.csv -a {apartment_name} -y {year}', fg='cyan')}")
+    click.echo()
+
+
+@config.command('delete')
+def config_delete():
+    """Delete one or more configuration files.
+    
+    Displays a numbered list of all configs and allows deletion
+    of single or multiple configs (e.g., 1 or 1,3,5).
+    """
+    configs = list_config_files()
+    
+    if not configs:
+        click.echo(click.style("❌ No configuration files found in config/", fg="red"))
+        return
+    
+    # Build flat list of all configs
+    all_configs = []
+    for apartment in sorted(configs.keys()):
+        for config_file in sorted(configs[apartment]):
+            all_configs.append(config_file)
+    
+    # Show available configs
+    click.echo("\n" + "="*70)
+    click.echo(click.style("  DELETE CONFIGURATION FILES", bold=True))
+    click.echo("="*70)
+    click.echo("\n🗑️  Available configs:\n")
+    
+    for idx, config_file in enumerate(all_configs, 1):
+        name = config_file.stem
+        is_test = name.endswith('_test')
+        badge = click.style('[TEST]', fg='yellow') if is_test else click.style('[PROD]', fg='green')
+        
+        try:
+            with open(config_file, 'r') as f:
+                data = json.load(f)
+                language = data.get('language', 'en').upper()
+                lang_badge = click.style(f'[{language}]', fg='blue')
+                click.echo(f"  {idx}. {badge} {lang_badge} {config_file.name}")
+        except:
+            click.echo(f"  {idx}. {config_file.name}")
+    
+    # Get user selection
+    click.echo()
+    click.echo("Enter config number(s) to delete:")
+    click.echo("  Single: 3")
+    click.echo("  Multiple: 1,4,5")
+    
+    selection = click.prompt('\nSelection', type=str)
+    
+    # Parse selection
+    try:
+        indices = [int(x.strip()) for x in selection.split(',')]
+    except ValueError:
+        click.echo(click.style("❌ Invalid input. Use numbers separated by commas.", fg="red"))
+        return
+    
+    # Validate indices
+    invalid = [i for i in indices if i < 1 or i > len(all_configs)]
+    if invalid:
+        click.echo(click.style(f"❌ Invalid selection(s): {', '.join(map(str, invalid))}", fg="red"))
+        return
+    
+    # Get files to delete
+    files_to_delete = [all_configs[i - 1] for i in indices]
+    
+    # Show confirmation
+    click.echo("\n" + "-"*70)
+    click.echo("Files to be deleted:\n")
+    for f in files_to_delete:
+        click.echo(f"  ❌ {click.style(f.name, fg='red')}")
+    
+    click.echo()
+    if not click.confirm(click.style('Are you sure? This cannot be undone!', fg='red', bold=True), default=False):
+        click.echo(click.style("❌ Cancelled", fg="yellow"))
+        return
+    
+    # Delete files
+    deleted_count = 0
+    for config_file in files_to_delete:
+        try:
+            config_file.unlink()
+            click.echo(f"✅ Deleted: {config_file.name}")
+            deleted_count += 1
+        except Exception as e:
+            click.echo(click.style(f"❌ Failed to delete {config_file.name}: {e}", fg="red"))
+    
+    click.echo("\n" + "="*70)
+    click.echo(click.style(f"  ✅ DELETED {deleted_count} CONFIG(S)", fg="green", bold=True))
+    click.echo("="*70)
     click.echo()
 
 
