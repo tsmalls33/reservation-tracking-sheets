@@ -400,7 +400,7 @@ def config_create():
     click.echo(f"Language: {new_language.upper()}")
     click.echo(f"Type: {'Test' if is_test else 'Production'}")
     click.echo(f"\n💡 {click.style('Remember:', fg='yellow', bold=True)} Share the Google Sheet with your service account email")
-    click.echo(f"   (found in credentials/service_account.json) as {click.style('Editor', bold=True)}")
+    click.echo(f"   (found in credentials/service_account.json or in notes.md) as {click.style('Editor', bold=True)}")
     click.echo(f"\nUse with: {click.style(f'reservations upload file.csv -a {apartment_name} -y {year}', fg='cyan')}")
     click.echo()
 
