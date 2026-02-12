@@ -246,27 +246,6 @@ def create_invoice_dataframe(month_data_list):
     # Return DataFrame without TOTAL row, and the commission total separately
     return df, commission_total
 
-def copy_template_invoice(client, template_id, invoice_number, owner_email=None):
-    """Use the shared template directly and just rename it.
-    
-    Since service accounts have no storage, we'll work with a single
-    pre-shared template that gets reused.
-    """
-    # Open the shared template
-    spreadsheet = client.open_by_key(template_id)
-    
-    # Rename it
-    spreadsheet.update_title(f"Invoice {invoice_number}")
-    
-    # Share with owner
-    if owner_email:
-        try:
-            spreadsheet.share(owner_email, perm_type='user', role='writer', notify=False)
-        except Exception as e:
-            print(f"   ⚠️  Could not share with {owner_email}: {e}")
-    
-    return spreadsheet
-
 def generate_pdf_export_link(spreadsheet_id):
     """Generate a direct link to export the spreadsheet as PDF.
     
@@ -481,14 +460,14 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     print_step("✅", "Data aggregated")
     print(f"   Commission Total: {commission_total:.2f}")
     
-    # Copy template
-    print_step("📋", "Copying invoice template...")
-    new_invoice = copy_template_invoice(client, template_id, invoice_number, owner_email)
+    # Open the template spreadsheet
+    print_step("📝", "Opening invoice template...")
+    invoice_sheet = client.open_by_key(template_id)
     
-    # Clean template BEFORE populating (ensures blank slate)
+    # Clean template (ensures blank slate, preserves formatting)
     print_step("🧹", "Cleaning template (preserving formatting)...")
     try:
-        worksheet = new_invoice.sheet1
+        worksheet = invoice_sheet.sheet1
         cleanup_template_before_populate(worksheet, invoice_config)
         print_step("✅", "Template cleaned")
     except Exception as e:
@@ -496,12 +475,12 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     
     # Populate invoice
     print_step("✏️", "Populating invoice...")
-    populate_invoice(client, new_invoice, invoice_config, apartment_info, invoice_number, invoice_date, df, commission_total)
+    populate_invoice(client, invoice_sheet, invoice_config, apartment_info, invoice_number, invoice_date, df, commission_total)
     
-    # Generate PDF export link using the new invoice's ID (not template_id)
+    # Generate PDF export link
     print_step("📄", "Generating PDF export link...")
-    pdf_link = generate_pdf_export_link(new_invoice.id)
-    print_step("✅", f"Direct PDF download link ready")
+    pdf_link = generate_pdf_export_link(invoice_sheet.id)
+    print_step("✅", "PDF export link ready")
     
     # Prepare email list (always include owner, plus any additional)
     emails_to_share = []
@@ -519,8 +498,8 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
         'year': year,
         'test_mode': test,
         'created_at': datetime.now().isoformat(),
-        'spreadsheet_id': new_invoice.id,
-        'spreadsheet_url': new_invoice.url,
+        'spreadsheet_id': invoice_sheet.id,
+        'spreadsheet_url': invoice_sheet.url,
         'pdf_export_link': pdf_link,
         'shared_with': emails_to_share,
         'commission_total': commission_total
@@ -530,10 +509,10 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     print_header("✅ INVOICE CREATED", "=")
     print(f"Invoice Number: {invoice_number}")
     print(f"Invoice Date: {invoice_date}")
-    print(f"\n📄 Direct PDF Download Link:")
+    print(f"\n📄 PDF Export Link:")
     print(f"   {pdf_link}")
     print(f"\n🔗 View/Edit Spreadsheet:")
-    print(f"   {new_invoice.url}")
+    print(f"   {invoice_sheet.url}")
     if emails_to_share:
         print(f"\n📤 Accessible by: {', '.join(emails_to_share)}")
     print(f"\nℹ️  Click the PDF link above to download invoice as PDF")
