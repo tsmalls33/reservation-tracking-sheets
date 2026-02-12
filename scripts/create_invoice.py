@@ -246,75 +246,25 @@ def create_invoice_dataframe(month_data_list):
     return df
 
 def copy_template_invoice(client, template_id, invoice_number, owner_email=None):
-    """Copy invoice template using Drive API to ensure it's created in owner's Drive.
+    """Use the shared template directly and just rename it.
     
-    Args:
-        client: gspread client
-        template_id: ID of the template spreadsheet
-        invoice_number: Invoice number for the title
-        owner_email: Email of the owner (to ensure file is in their Drive)
-        
-    Returns:
-        gspread.Spreadsheet: The new spreadsheet
+    Since service accounts have no storage, we'll work with a single
+    pre-shared template that gets reused.
     """
-    # Build Drive service
-    creds = get_credentials()
-    drive_service = build('drive', 'v3', credentials=creds)
+    # Open the shared template
+    spreadsheet = client.open_by_key(template_id)
     
-    # Get template file info to find its parent folder
-    template_file = drive_service.files().get(
-        fileId=template_id,
-        fields='parents'
-    ).execute()
+    # Rename it
+    spreadsheet.update_title(f"Invoice {invoice_number}")
     
-   # Get the parent folder(s) of the template
-    template_parents = template_file.get('parents', [])
-
-   # Copy file and specify parent folder to ensure it goes to owner's Drive
-    copy_body = {'name': f"Invoice {invoice_number}"}
-    if template_parents:
-        # Use same parent folder as template (your Drive)
-        copy_body['parents'] = template_parents
-
-    copied_file = drive_service.files().copy(
-        fileId=template_id,
-        body=copy_body
-    ).execute()
- 
-    # Get the new file ID
-    new_file_id = copied_file['id']
-    
-    # If owner email is provided and different from service account, transfer ownership
+    # Share with owner
     if owner_email:
         try:
-            # First check if owner already has access
-            permissions = drive_service.permissions().list(
-                fileId=new_file_id,
-                fields='permissions(emailAddress,role)'
-            ).execute()
-            
-            # If owner doesn't have owner role, grant it
-            owner_has_access = any(
-                p.get('emailAddress') == owner_email and p.get('role') == 'owner'
-                for p in permissions.get('permissions', [])
-            )
-            
-            if not owner_has_access:
-                # Share with owner
-                drive_service.permissions().create(
-                    fileId=new_file_id,
-                    body={
-                        'type': 'user',
-                        'role': 'writer',
-                        'emailAddress': owner_email
-                    },
-                    sendNotificationEmail=False
-                ).execute()
+            spreadsheet.share(owner_email, perm_type='user', role='writer', notify=False)
         except Exception as e:
-            print(f"   ⚠️  Note: Could not share with {owner_email}: {e}")
+            print(f"   ⚠️  Could not share with {owner_email}: {e}")
     
-    # Open with gspread and return
-    return client.open_by_key(new_file_id)
+    return spreadsheet
 
 def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoice_number, df):
     """Populate invoice with data."""
