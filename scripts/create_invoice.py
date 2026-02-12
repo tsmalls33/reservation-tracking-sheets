@@ -293,16 +293,16 @@ def generate_pdf_export_link(spreadsheet_id):
     # they can configure and download. This is more reliable than /export endpoint.
     return f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/edit#gid=0"
 
-def cleanup_template_before_populate(worksheet, invoice_config, num_months):
+def cleanup_template_before_populate(worksheet, invoice_config):
     """Clear ALL cells that will be touched during invoice population.
     
     This ensures the template is completely clean before we add new data.
     Clears exactly what will be written to prevent leftover data.
+    Always clears 13 rows (12 months + TOTAL) to handle max invoice size.
     
     Args:
         worksheet: The worksheet object
         invoice_config: Invoice configuration
-        num_months: Number of months (to calculate table size)
     """
     mapping = invoice_config['invoice_mapping']
     
@@ -338,14 +338,13 @@ def cleanup_template_before_populate(worksheet, invoice_config, num_months):
             'values': [['']]
         })
     
-    # Clear the table area (data rows + TOTAL row)
-    # Table has num_months + 1 rows (for TOTAL)
+    # Clear the table area - ALWAYS 13 rows (12 months + TOTAL)
     table_start_row = mapping['table_start_row']  # 26
     table_start_col = mapping['table_start_col']  # A
     
     # DataFrame has 5 columns: month, rent, profit, fee_percent, fee_amount
     num_cols = 5
-    num_rows = num_months + 1  # Include TOTAL row
+    num_rows = 13  # Always clear for 12 months + TOTAL row
     
     # Calculate end column (A + 5 columns = E)
     end_col_num = ord(table_start_col) + num_cols - 1
@@ -496,10 +495,10 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     new_invoice = copy_template_invoice(client, template_id, invoice_number, owner_email)
     
     # Clean template BEFORE populating (ensures blank slate)
-    print_step("🧹", "Cleaning template (clearing cells that will be written)...")
+    print_step("🧹", "Cleaning template (clearing all cells for 12 months + total)...")
     try:
         worksheet = new_invoice.sheet1
-        cleanup_template_before_populate(worksheet, invoice_config, len(months))
+        cleanup_template_before_populate(worksheet, invoice_config)
         print_step("✅", "Template cleaned")
     except Exception as e:
         print_step("⚠️", f"Could not clean template: {e}")
