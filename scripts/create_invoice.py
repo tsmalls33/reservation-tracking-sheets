@@ -294,12 +294,48 @@ def generate_pdf_export_link(spreadsheet_id, sheet_name="Sheet1"):
     
     return f"{base_url}?{urlencode(params)}"
 
-def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoice_number, df):
-    """Populate invoice with data.
+def cleanup_template_before_populate(client, spreadsheet, invoice_config):
+    """Clear any existing data from template before populating.
     
-    Returns:
-        dict: Information about what was populated (for cleanup)
+    This ensures the template is clean before we add new invoice data.
+    
+    Args:
+        client: gspread client
+        spreadsheet: The spreadsheet object
+        invoice_config: Invoice configuration
     """
+    worksheet = spreadsheet.sheet1
+    mapping = invoice_config['invoice_mapping']
+    
+    # Clear header fields
+    header_ranges = [
+        mapping['client_name'],
+        mapping['property_name'],
+        mapping['invoice_number']
+    ]
+    
+    for range_name in header_ranges:
+        worksheet.update(values=[['']], range_name=range_name)
+    
+    # Clear table data area (use a reasonable range)
+    # Assuming max 20 rows of data (adjust if needed)
+    table_start_row = mapping['table_start_row']
+    table_start_col = mapping['table_start_col']
+    
+    # Clear up to 20 rows, 5 columns (month, rent, profit, fee%, fee amount)
+    num_rows = 20
+    num_cols = 5
+    
+    end_col_num = ord(table_start_col) + num_cols - 1
+    end_col = chr(end_col_num)
+    end_row = table_start_row + num_rows - 1
+    
+    range_name = f"{table_start_col}{table_start_row}:{end_col}{end_row}"
+    empty_data = [[''] * num_cols for _ in range(num_rows)]
+    worksheet.update(values=empty_data, range_name=range_name)
+
+def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoice_number, df):
+    """Populate invoice with data."""
     worksheet = spreadsheet.sheet1  # Assume first sheet
     
     mapping = invoice_config['invoice_mapping']
@@ -309,7 +345,7 @@ def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoic
     worksheet.update(values=[[apartment_info['property_name']]], range_name=mapping['property_name'])
     worksheet.update(values=[[invoice_number]], range_name=mapping['invoice_number'])
     
-    # Write table data (excluding TOTAL row for now)
+    # Write table data
     table_start_row = mapping['table_start_row']
     table_start_col = mapping['table_start_col']
     
@@ -324,51 +360,6 @@ def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoic
     
     range_name = f"{table_start_col}{table_start_row}:{end_col}{end_row}"
     worksheet.update(values=table_data, range_name=range_name)
-    
-    # Return info about what was populated
-    return {
-        'table_range': range_name,
-        'header_ranges': [
-            mapping['client_name'],
-            mapping['property_name'],
-            mapping['invoice_number']
-        ]
-    }
-
-def cleanup_template(client, spreadsheet, invoice_config, populated_info):
-    """Clear the populated fields to restore template to blank state.
-    
-    Args:
-        client: gspread client
-        spreadsheet: The spreadsheet object
-        invoice_config: Invoice configuration
-        populated_info: Dictionary with ranges that were populated
-    """
-    worksheet = spreadsheet.sheet1
-    mapping = invoice_config['invoice_mapping']
-    
-    # Clear header fields
-    for range_name in populated_info['header_ranges']:
-        worksheet.update(values=[['']], range_name=range_name)
-    
-    # Clear table data
-    table_range = populated_info['table_range']
-    # Parse the range to get number of rows and columns
-    start, end = table_range.split(':')
-    start_row = int(re.search(r'\d+', start).group())
-    end_row = int(re.search(r'\d+', end).group())
-    num_rows = end_row - start_row + 1
-    
-    start_col = re.search(r'[A-Z]+', start).group()
-    end_col = re.search(r'[A-Z]+', end).group()
-    num_cols = ord(end_col) - ord(start_col) + 1
-    
-    # Create empty data
-    empty_data = [[''] * num_cols for _ in range(num_rows)]
-    worksheet.update(values=empty_data, range_name=table_range)
-    
-    # Restore original template title
-    spreadsheet.update_title("TEST template invoice")
 
 def save_invoice_metadata(apartment, invoice_number, invoice_data):
     """Save invoice metadata locally."""
@@ -435,22 +426,22 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     template_id = invoice_config['template_sheet_id']
     new_invoice = copy_template_invoice(client, template_id, invoice_number, owner_email)
     
+    # Clean template BEFORE populating (ensures blank slate)
+    print_step("🧹", "Preparing clean template...")
+    try:
+        cleanup_template_before_populate(client, new_invoice, invoice_config)
+        print_step("✅", "Template cleaned")
+    except Exception as e:
+        print_step("⚠️", f"Could not clean template: {e}")
+    
     # Populate invoice
     print_step("✏️", "Populating invoice...")
-    populated_info = populate_invoice(client, new_invoice, invoice_config, apartment_info, invoice_number, df)
+    populate_invoice(client, new_invoice, invoice_config, apartment_info, invoice_number, df)
     
-    # Generate PDF export link
+    # Generate PDF export link (after populating, so it contains data)
     print_step("📄", "Generating PDF export link...")
     pdf_link = generate_pdf_export_link(new_invoice.id)
     print_step("✅", f"PDF link ready")
-    
-    # Clean up template (restore to blank state)
-    print_step("🧹", "Cleaning up template...")
-    try:
-        cleanup_template(client, new_invoice, invoice_config, populated_info)
-        print_step("✅", "Template reset to blank state")
-    except Exception as e:
-        print_step("⚠️", f"Could not clean up template: {e}")
     
     # Prepare email list (always include owner, plus any additional)
     emails_to_share = []
@@ -482,7 +473,7 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     print(f"   {new_invoice.url}")
     if emails_to_share:
         print(f"\n📤 Accessible by: {', '.join(emails_to_share)}")
-    print(f"\nℹ️  Template has been reset and is ready for next invoice")
+    print(f"\nℹ️  Spreadsheet remains populated with invoice data")
     print()
     
     return invoice_number, pdf_link
