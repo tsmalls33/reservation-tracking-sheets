@@ -41,6 +41,23 @@ MONTH_NAMES = {
     'december': {'en': 'December', 'es': 'Diciembre'}
 }
 
+# Month abbreviations and groups
+MONTH_ABBREV = {
+    'jan': 'january', 'feb': 'february', 'mar': 'march',
+    'apr': 'april', 'may': 'may', 'jun': 'june',
+    'jul': 'july', 'aug': 'august', 'sep': 'september',
+    'oct': 'october', 'nov': 'november', 'dec': 'december'
+}
+
+MONTH_GROUPS = {
+    'q1': ['jan', 'feb', 'mar'],
+    'q2': ['apr', 'may', 'jun'],
+    'q3': ['jul', 'aug', 'sep'],
+    'q4': ['oct', 'nov', 'dec'],
+    'all': ['jan', 'feb', 'mar', 'apr', 'may', 'jun',
+            'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+}
+
 
 def detect_platform(filename):
     """Automatically detect if a CSV is from Airbnb or Booking.com.
@@ -89,6 +106,10 @@ def list_config_files():
     
     configs = defaultdict(list)
     for config_file in CONFIG_DIR.glob('*.json'):
+        # Skip invoices config
+        if config_file.name == 'invoices.json':
+            continue
+            
         # Parse filename: apartment_year[_test].json
         name = config_file.stem
         parts = name.split('_')
@@ -106,6 +127,35 @@ def list_config_files():
             configs[apartment].append(config_file)
     
     return dict(configs)
+
+
+def parse_months(month_input):
+    """Parse month input (jan,feb,q1,all) into list of month keys.
+    
+    Args:
+        month_input: Comma-separated string like 'jan,feb' or 'q1' or 'all'
+    
+    Returns:
+        List of month keys: ['january', 'february', ...]
+    """
+    parts = [m.strip().lower() for m in month_input.split(',')]
+    abbrevs = []
+    
+    for part in parts:
+        if part in MONTH_GROUPS:
+            # Expand group (q1, q2, etc.)
+            abbrevs.extend(MONTH_GROUPS[part])
+        elif part in MONTH_ABBREV:
+            # Individual month
+            abbrevs.append(part)
+        else:
+            raise ValueError(
+                f"Invalid month: '{part}'.\n"
+                f"Valid options: jan-dec, q1-q4, all"
+            )
+    
+    # Convert abbreviations to full month names
+    return [MONTH_ABBREV[a] for a in abbrevs]
 
 
 def translate_tab_names(config_data, target_language):
@@ -161,6 +211,7 @@ def cli():
     • Spanish/English month name support
     • Calculated fields (e.g., sum of Precio + Comision)
     • Smart clearing (only detected months) or hard replace (all months)
+    • Invoice generation from reservation data
     
     \b
     Example:
@@ -180,6 +231,16 @@ def config():
     
     Create new configs from templates, list existing configs,
     delete configs, and manage spreadsheet settings.
+    """
+    pass
+
+
+@cli.group()
+def invoice():
+    """Manage invoices.
+    
+    Create invoices from reservation data, list existing invoices,
+    and manage invoice templates.
     """
     pass
 
@@ -338,6 +399,8 @@ def config_create():
     click.echo(f"Sheet ID: {new_sheet_id}")
     click.echo(f"Language: {new_language.upper()}")
     click.echo(f"Type: {'Test' if is_test else 'Production'}")
+    click.echo(f"\n💡 {click.style('Remember:', fg='yellow', bold=True)} Share the Google Sheet with your service account email")
+    click.echo(f"   (found in credentials/service_account.json) as {click.style('Editor', bold=True)}")
     click.echo(f"\nUse with: {click.style(f'reservations upload file.csv -a {apartment_name} -y {year}', fg='cyan')}")
     click.echo()
 
@@ -429,6 +492,136 @@ def config_delete():
     click.echo("\n" + "="*70)
     click.echo(click.style(f"  ✅ DELETED {deleted_count} CONFIG(S)", fg="green", bold=True))
     click.echo("="*70)
+    click.echo()
+
+
+@invoice.command('create')
+@click.option('--apartment', '-a', required=True, help='Apartment name')
+@click.option('--months', '-m', required=True, 
+              help='Months (jan,feb or q1,q2 or all)')
+@click.option('--year', '-y', type=int, default=2026, help='Year (default: 2026)')
+@click.option('--email', '-e', help='Email to share invoice with')
+def invoice_create(apartment, months, year, email):
+    """Create an invoice from reservation data.
+    
+    Extracts financial data from specified months and generates
+    a new invoice by copying the template and populating it with
+    aggregated data.
+    
+    \b
+    Month Options:
+      Individual: jan,feb,mar
+      Quarters: q1 (jan-mar), q2 (apr-jun), q3 (jul-sep), q4 (oct-dec)
+      Full year: all
+    
+    \b
+    Examples:
+      # Single month
+      reservations invoice create -a mediona -m jan -y 2025
+      
+      # Multiple months
+      reservations invoice create -a mediona -m jan,feb,mar -y 2025
+      
+      # Quarter
+      reservations invoice create -a mediona -m q1 -y 2025
+      
+      # Full year
+      reservations invoice create -a mediona -m all -y 2025
+      
+      # With email sharing
+      reservations invoice create -a mediona -m q1 -y 2025 -e your@email.com
+    """
+    try:
+        # Parse months
+        month_list = parse_months(months)
+        
+        click.echo(f"\n📅 Months: {', '.join([m.capitalize() for m in month_list])}")
+        
+        # Call invoice creation script
+        invoice_script = PROJECT_ROOT / "scripts/create_invoice.py"
+        cmd = [
+            sys.executable, str(invoice_script),
+            '--apartment', apartment,
+            '--months', ','.join(month_list),
+            '--year', str(year)
+        ]
+        
+        if email:
+            cmd.extend(['--email', email])
+        
+        subprocess.run(cmd, check=True)
+        
+    except ValueError as e:
+        click.echo(click.style(f"❌ {e}", fg="red"))
+        sys.exit(1)
+    except subprocess.CalledProcessError:
+        click.echo(click.style("❌ Invoice creation failed!", fg="red"))
+        sys.exit(1)
+
+
+@invoice.command('list')
+@click.option('--apartment', '-a', help='Filter by apartment')
+def invoice_list(apartment):
+    """List all generated invoices.
+    
+    Shows invoice numbers, dates, months covered, and spreadsheet links.
+    Optionally filter by apartment.
+    """
+    invoices_dir = PROJECT_ROOT / "invoices"
+    
+    if not invoices_dir.exists():
+        click.echo(click.style("❌ No invoices directory found", fg="red"))
+        return
+    
+    # Collect all invoices
+    all_invoices = []
+    
+    if apartment:
+        # Filter by apartment
+        apartment_dir = invoices_dir / apartment
+        if apartment_dir.exists():
+            for invoice_file in apartment_dir.glob('*.json'):
+                try:
+                    with open(invoice_file, 'r') as f:
+                        data = json.load(f)
+                        data['apartment'] = apartment
+                        all_invoices.append(data)
+                except:
+                    pass
+    else:
+        # All apartments
+        for apartment_dir in invoices_dir.iterdir():
+            if apartment_dir.is_dir():
+                for invoice_file in apartment_dir.glob('*.json'):
+                    try:
+                        with open(invoice_file, 'r') as f:
+                            data = json.load(f)
+                            all_invoices.append(data)
+                    except:
+                        pass
+    
+    if not all_invoices:
+        click.echo(click.style("❌ No invoices found", fg="yellow"))
+        click.echo(f"\nCreate one with: {click.style('reservations invoice create -a mediona -m jan', fg='cyan')}")
+        return
+    
+    # Sort by created date
+    all_invoices.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+    
+    # Display
+    click.echo("\n" + "="*70)
+    click.echo(click.style("  INVOICES", bold=True))
+    click.echo("="*70)
+    
+    for inv in all_invoices:
+        click.echo(f"\n📎 {click.style(inv['invoice_number'], fg='cyan', bold=True)}")
+        click.echo(f"   Apartment: {inv['apartment']}")
+        click.echo(f"   Months: {', '.join([m.capitalize() for m in inv['months']])}")
+        click.echo(f"   Year: {inv['year']}")
+        click.echo(f"   Created: {inv['created_at'][:10]}")
+        click.echo(f"   🔗 {inv['spreadsheet_url']}")
+    
+    click.echo(f"\n📊 Total: {len(all_invoices)} invoice(s)")
     click.echo()
 
 
