@@ -498,9 +498,9 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     print_step("✏️", "Populating invoice...")
     populate_invoice(client, new_invoice, invoice_config, apartment_info, invoice_number, invoice_date, df, commission_total)
     
-    # Generate PDF export link using template_sheet_id from config
+    # Generate PDF export link using the new invoice's ID (not template_id)
     print_step("📄", "Generating PDF export link...")
-    pdf_link = generate_pdf_export_link(template_id)
+    pdf_link = generate_pdf_export_link(new_invoice.id)
     print_step("✅", f"Direct PDF download link ready")
     
     # Prepare email list (always include owner, plus any additional)
