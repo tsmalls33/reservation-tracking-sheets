@@ -296,8 +296,7 @@ def generate_pdf_export_link(spreadsheet_id):
 def cleanup_template_before_populate(worksheet, invoice_config):
     """Clear ALL cells that will be touched during invoice population.
     
-    This ensures the template is completely clean before we add new data.
-    Clears exactly what will be written to prevent leftover data.
+    This clears cell content while preserving formatting (borders, colors, styles).
     Always clears 13 rows (12 months + TOTAL) to handle max invoice size.
     
     Args:
@@ -306,8 +305,8 @@ def cleanup_template_before_populate(worksheet, invoice_config):
     """
     mapping = invoice_config['invoice_mapping']
     
-    # Collect all individual cells to clear
-    cells_to_clear = [
+    # Collect all ranges to clear (preserves formatting)
+    ranges_to_clear = [
         mapping['invoice_number'],      # B16
         mapping['invoice_date'],        # B14
         mapping['client_name'],         # E7
@@ -324,21 +323,13 @@ def cleanup_template_before_populate(worksheet, invoice_config):
     
     for cell_key in optional_cells:
         if cell_key in mapping and mapping[cell_key]:
-            cells_to_clear.append(mapping[cell_key])
+            ranges_to_clear.append(mapping[cell_key])
     
     # Add commission total cell
     if 'commission_total_cell' in mapping:
-        cells_to_clear.append(mapping['commission_total_cell'])  # H36
+        ranges_to_clear.append(mapping['commission_total_cell'])  # H36
     
-    # Clear all individual cells in one batch update
-    updates = []
-    for cell in cells_to_clear:
-        updates.append({
-            'range': cell,
-            'values': [['']]
-        })
-    
-    # Clear the table area - ALWAYS 13 rows (12 months + TOTAL)
+    # Add the table area - ALWAYS 13 rows (12 months + TOTAL)
     table_start_row = mapping['table_start_row']  # 26
     table_start_col = mapping['table_start_col']  # A
     
@@ -352,18 +343,14 @@ def cleanup_template_before_populate(worksheet, invoice_config):
     end_row = table_start_row + num_rows - 1
     
     table_range = f"{table_start_col}{table_start_row}:{end_col}{end_row}"
-    empty_table_data = [[''] * num_cols for _ in range(num_rows)]
+    ranges_to_clear.append(table_range)
     
-    updates.append({
-        'range': table_range,
-        'values': empty_table_data
-    })
+    # Use batch_clear to clear content while preserving formatting
+    worksheet.batch_clear(ranges_to_clear)
     
-    # Execute batch update
-    worksheet.batch_update(updates)
-    
-    print(f"   → Cleared {len(cells_to_clear)} individual cells")
+    print(f"   → Cleared {len(ranges_to_clear) - 1} individual cells")
     print(f"   → Cleared table range {table_range} ({num_rows} rows x {num_cols} cols)")
+    print(f"   → Formatting preserved")
 
 def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoice_number, invoice_date, df, commission_total):
     """Populate invoice with data.
@@ -495,7 +482,7 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     new_invoice = copy_template_invoice(client, template_id, invoice_number, owner_email)
     
     # Clean template BEFORE populating (ensures blank slate)
-    print_step("🧹", "Cleaning template (clearing all cells for 12 months + total)...")
+    print_step("🧹", "Cleaning template (preserving formatting)...")
     try:
         worksheet = new_invoice.sheet1
         cleanup_template_before_populate(worksheet, invoice_config)
