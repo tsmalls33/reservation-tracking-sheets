@@ -176,8 +176,14 @@ def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoic
     
     return spreadsheet
 
-def share_invoice(client, spreadsheet_id, user_email):
-    """Share invoice with user email."""
+def share_invoice(client, spreadsheet_id, email_addresses):
+    """Share invoice with one or more email addresses.
+    
+    Args:
+        client: gspread client
+        spreadsheet_id: ID of the spreadsheet to share
+        email_addresses: List of email addresses to share with
+    """
     from googleapiclient.discovery import build
     
     creds_path = PROJECT_ROOT / 'credentials/service_account.json'
@@ -187,15 +193,21 @@ def share_invoice(client, spreadsheet_id, user_email):
     )
     
     drive_service = build('drive', 'v3', credentials=creds)
-    drive_service.permissions().create(
-        fileId=spreadsheet_id,
-        body={
-            'type': 'user',
-            'role': 'writer',
-            'emailAddress': user_email
-        },
-        sendNotificationEmail=False
-    ).execute()
+    
+    for email in email_addresses:
+        try:
+            drive_service.permissions().create(
+                fileId=spreadsheet_id,
+                body={
+                    'type': 'user',
+                    'role': 'writer',
+                    'emailAddress': email
+                },
+                sendNotificationEmail=False
+            ).execute()
+            print_step("✅", f"Shared with {email}")
+        except Exception as e:
+            print_step("⚠️", f"Failed to share with {email}: {e}")
 
 def save_invoice_metadata(apartment, invoice_number, invoice_data):
     """Save invoice metadata locally."""
@@ -206,8 +218,15 @@ def save_invoice_metadata(apartment, invoice_number, invoice_data):
     with open(metadata_file, 'w') as f:
         json.dump(invoice_data, f, indent=2)
 
-def create_invoice(apartment, months, year, user_email=None):
-    """Main invoice creation function."""
+def create_invoice(apartment, months, year, additional_emails=None):
+    """Main invoice creation function.
+    
+    Args:
+        apartment: Apartment name
+        months: List of month keys
+        year: Year
+        additional_emails: Optional list of additional emails to share with
+    """
     print_header("📄 INVOICE CREATION")
     
     # Load configs
@@ -219,6 +238,11 @@ def create_invoice(apartment, months, year, user_email=None):
         raise ValueError(f"Apartment '{apartment}' not configured in invoices.json")
     
     apartment_info = invoice_config['apartments'][apartment]
+    owner_email = invoice_config.get('owner_email')
+    
+    if not owner_email or owner_email == 'YOUR_EMAIL@example.com':
+        print_step("⚠️", "Warning: owner_email not configured in config/invoices.json")
+        print("   Update the 'owner_email' field to automatically share invoices with yourself.")
     
     # Authenticate
     print_step("🔐", "Authenticating...")
@@ -249,10 +273,17 @@ def create_invoice(apartment, months, year, user_email=None):
     print_step("✏️", "Populating invoice...")
     populate_invoice(client, new_invoice, invoice_config, apartment_info, invoice_number, df)
     
-    # Share with user if email provided
-    if user_email:
-        print_step("📧", f"Sharing with {user_email}...")
-        share_invoice(client, new_invoice.id, user_email)
+    # Prepare email list (always include owner, plus any additional)
+    emails_to_share = []
+    if owner_email and owner_email != 'YOUR_EMAIL@example.com':
+        emails_to_share.append(owner_email)
+    if additional_emails:
+        emails_to_share.extend(additional_emails)
+    
+    # Share with all emails
+    if emails_to_share:
+        print_step("📧", "Sharing invoice...")
+        share_invoice(client, new_invoice.id, emails_to_share)
     
     # Save metadata
     metadata = {
@@ -262,14 +293,18 @@ def create_invoice(apartment, months, year, user_email=None):
         'year': year,
         'created_at': datetime.now().isoformat(),
         'spreadsheet_id': new_invoice.id,
-        'spreadsheet_url': new_invoice.url
+        'spreadsheet_url': new_invoice.url,
+        'shared_with': emails_to_share
     }
     save_invoice_metadata(apartment, invoice_number, metadata)
     
-    print_header("✅ INVOICE CREATED")
+    print_header("✅ INVOICE CREATED", "=")
     print(f"Invoice Number: {invoice_number}")
-    print(f"Spreadsheet URL: {new_invoice.url}")
-    print(f"Spreadsheet ID: {new_invoice.id}")
+    print(f"\n🔗 Open in Google Sheets:")
+    print(f"   {new_invoice.url}")
+    print(f"\n🆔 Spreadsheet ID: {new_invoice.id}")
+    if emails_to_share:
+        print(f"\n📤 Shared with: {', '.join(emails_to_share)}")
     print()
     
     return invoice_number, new_invoice.url
@@ -280,9 +315,13 @@ if __name__ == "__main__":
     parser.add_argument('--apartment', '-a', required=True)
     parser.add_argument('--months', '-m', required=True, help="Comma-separated month keys")
     parser.add_argument('--year', '-y', type=int, required=True)
-    parser.add_argument('--email', '-e', help="Email to share invoice with")
+    parser.add_argument('--email', '-e', help="Additional email(s) to share with (comma-separated)")
     
     args = parser.parse_args()
     months = [m.strip() for m in args.months.split(',')]
     
-    create_invoice(args.apartment, months, args.year, args.email)
+    additional_emails = None
+    if args.email:
+        additional_emails = [e.strip() for e in args.email.split(',')]
+    
+    create_invoice(args.apartment, months, args.year, additional_emails)
