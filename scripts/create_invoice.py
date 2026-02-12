@@ -11,6 +11,7 @@ import sys
 import re
 from pathlib import Path
 from datetime import datetime
+import time
 
 PROJECT_ROOT = Path("/Users/thomas/dev/reservation-tracking-sheets")
 
@@ -47,6 +48,63 @@ def authenticate_sheets():
     creds_path = PROJECT_ROOT / 'credentials/service_account.json'
     creds = Credentials.from_service_account_file(str(creds_path), scopes=scope)
     return gspread.authorize(creds)
+
+def parse_financial_value(value):
+    """Parse a financial value from string to float.
+    
+    Handles European format (1.234,56€) and US format (1,234.56$)
+    Also handles percentages (15%).
+    
+    Args:
+        value: String value from spreadsheet
+        
+    Returns:
+        float: Parsed numeric value, or 0.0 if parsing fails
+    """
+    if not value or (isinstance(value, str) and value.strip() == ''):
+        return 0.0
+    
+    # Convert to string if needed
+    value_str = str(value).strip()
+    
+    try:
+        # Handle percentages
+        if '%' in value_str:
+            # Remove % and convert (15% -> 15.0)
+            clean_value = value_str.replace('%', '').strip()
+            # Remove any spaces
+            clean_value = clean_value.replace(' ', '')
+            return float(clean_value)
+        
+        # Remove currency symbols
+        clean_value = value_str
+        for symbol in ['€', '$', '£', '¥']:
+            clean_value = clean_value.replace(symbol, '')
+        
+        # Remove spaces
+        clean_value = clean_value.strip().replace(' ', '')
+        
+        # Detect format based on which comes last: comma or dot
+        # European: 1.234,56 (comma is decimal separator)
+        # US: 1,234.56 (dot is decimal separator)
+        
+        last_comma = clean_value.rfind(',')
+        last_dot = clean_value.rfind('.')
+        
+        if last_comma > last_dot:
+            # European format: comma is decimal separator
+            # Remove dots (thousands separator) and replace comma with dot
+            clean_value = clean_value.replace('.', '').replace(',', '.')
+        else:
+            # US format: dot is decimal separator
+            # Just remove commas (thousands separator)
+            clean_value = clean_value.replace(',', '')
+        
+        return float(clean_value)
+        
+    except (ValueError, AttributeError) as e:
+        print(f"   ⚠️  Warning: Could not parse '{value}', using 0.0")
+        return 0.0
 
 def get_next_invoice_number(apartment, invoice_code, test=False):
     """Generate next invoice number for apartment.
@@ -130,23 +188,36 @@ def extract_month_data(client, apartment_config, invoice_config, month_key, year
     
     # Extract source cells
     source_cells = invoice_config['source_cells']
-    data = {}
     
-    for key, cell in source_cells.items():
-        value = worksheet.acell(cell).value
-        # Clean and convert to float if numeric
-        try:
-            if not value or value.strip() == '':
-                # Empty cell
-                data[key] = 0.0
-            else:
-                # Remove currency symbols and convert
-                clean_value = value.replace('€', '').replace(',', '.').strip()
-                data[key] = float(clean_value)
-        except (ValueError, AttributeError) as e:
-            # If conversion fails, default to 0.0
-            print(f"   ⚠️  Warning: Could not convert '{value}' in cell {cell} ({key}), using 0.0")
-            data[key] = 0.0
+    # Batch read all cells at once to reduce API calls
+    cell_list = list(source_cells.values())
+    cell_ranges = ':'.join([cell_list[0], cell_list[-1]])  # e.g., "E3:J2"
+    
+    # Better approach: read each cell individually but collect all cell references first
+    # Then batch fetch them
+    try:
+        # Get all cell values in one API call using batch_get
+        cell_values = worksheet.batch_get(cell_list)
+        
+        # Map cell references to values
+        data = {}
+        for i, (key, cell) in enumerate(source_cells.items()):
+            try:
+                value = cell_values[i][0][0] if cell_values[i] and cell_values[i][0] else ''
+            except (IndexError, KeyError):
+                value = ''
+            
+            # Parse the value
+            data[key] = parse_financial_value(value)
+    
+    except Exception as e:
+        # Fallback to individual cell reads if batch fails
+        print(f"   ⚠️  Batch read failed, falling back to individual reads: {e}")
+        data = {}
+        for key, cell in source_cells.items():
+            value = worksheet.acell(cell).value
+            data[key] = parse_financial_value(value)
+            time.sleep(0.1)  # Small delay to avoid rate limits
     
     return {
         'month': MONTH_NAMES[month_key][language],
@@ -291,6 +362,8 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
         print(f"   → {month.capitalize()}...")
         data = extract_month_data(client, apartment_config, invoice_config, month, year)
         month_data_list.append(data)
+        # Small delay between months to avoid rate limits
+        time.sleep(0.5)
     
     # Create DataFrame
     df = create_invoice_dataframe(month_data_list)
