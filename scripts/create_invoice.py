@@ -470,6 +470,7 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     
     apartment_info = invoice_config['apartments'][apartment]
     owner_email = invoice_config.get('owner_email')
+    template_id = invoice_config['template_sheet_id']
     
     if not owner_email or owner_email == 'YOUR_EMAIL@example.com':
         print_step("⚠️", "Warning: owner_email not configured in config/invoices.json")
@@ -504,7 +505,6 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     
     # Copy template
     print_step("📋", "Copying invoice template...")
-    template_id = invoice_config['template_sheet_id']
     new_invoice = copy_template_invoice(client, template_id, invoice_number, owner_email)
     
     # Clean template BEFORE populating (ensures blank slate)
@@ -520,10 +520,10 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     print_step("✏️", "Populating invoice...")
     populate_invoice(client, new_invoice, invoice_config, apartment_info, invoice_number, invoice_date, df, commission_total)
     
-    # Generate PDF export link (after populating, so it contains data)
+    # Generate PDF export link using template_sheet_id from config
     print_step("📄", "Generating PDF export link...")
-    pdf_link = generate_pdf_export_link(new_invoice.id)
-    print_step("✅", f"PDF link ready")
+    pdf_link = generate_pdf_export_link(template_id)
+    print_step("✅", f"PDF link ready (using template sheet ID from config)")
     
     # Prepare email list (always include owner, plus any additional)
     emails_to_share = []
