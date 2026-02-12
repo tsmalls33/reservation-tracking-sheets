@@ -5,6 +5,7 @@ Invoice Creation Script - Generate invoices from apartment reservation data
 
 import gspread
 from google.oauth2.service_account import Credentials
+from googleapiclient.discovery import build
 import pandas as pd
 import json
 import sys
@@ -39,14 +40,18 @@ def print_header(title, char="="):
 def print_step(emoji, message):
     print(f"{emoji} {message}")
 
-def authenticate_sheets():
-    """Authenticate with Google Sheets API."""
+def get_credentials():
+    """Get credentials for Google APIs."""
     scope = [
         'https://spreadsheets.google.com/feeds',
         'https://www.googleapis.com/auth/drive'
     ]
     creds_path = PROJECT_ROOT / 'credentials/service_account.json'
-    creds = Credentials.from_service_account_file(str(creds_path), scopes=scope)
+    return Credentials.from_service_account_file(str(creds_path), scopes=scope)
+
+def authenticate_sheets():
+    """Authenticate with Google Sheets API."""
+    creds = get_credentials()
     return gspread.authorize(creds)
 
 def parse_financial_value(value):
@@ -191,10 +196,7 @@ def extract_month_data(client, apartment_config, invoice_config, month_key, year
     
     # Batch read all cells at once to reduce API calls
     cell_list = list(source_cells.values())
-    cell_ranges = ':'.join([cell_list[0], cell_list[-1]])  # e.g., "E3:J2"
     
-    # Better approach: read each cell individually but collect all cell references first
-    # Then batch fetch them
     try:
         # Get all cell values in one API call using batch_get
         cell_values = worksheet.batch_get(cell_list)
@@ -243,10 +245,68 @@ def create_invoice_dataframe(month_data_list):
     df = pd.concat([df, pd.DataFrame([totals])], ignore_index=True)
     return df
 
-def copy_template_invoice(client, template_id, invoice_number):
-    """Copy invoice template and return new spreadsheet."""
-    new_sheet = client.copy(template_id, title=f"Invoice {invoice_number}")
-    return new_sheet
+def copy_template_invoice(client, template_id, invoice_number, owner_email=None):
+    """Copy invoice template using Drive API to ensure it's created in owner's Drive.
+    
+    Args:
+        client: gspread client
+        template_id: ID of the template spreadsheet
+        invoice_number: Invoice number for the title
+        owner_email: Email of the owner (to ensure file is in their Drive)
+        
+    Returns:
+        gspread.Spreadsheet: The new spreadsheet
+    """
+    # Build Drive service
+    creds = get_credentials()
+    drive_service = build('drive', 'v3', credentials=creds)
+    
+    # Get template file info to find its parent folder
+    template_file = drive_service.files().get(
+        fileId=template_id,
+        fields='parents'
+    ).execute()
+    
+    # Copy file using Drive API - stays in same folder as template
+    copied_file = drive_service.files().copy(
+        fileId=template_id,
+        body={'name': f"Invoice {invoice_number}"}
+    ).execute()
+    
+    # Get the new file ID
+    new_file_id = copied_file['id']
+    
+    # If owner email is provided and different from service account, transfer ownership
+    if owner_email:
+        try:
+            # First check if owner already has access
+            permissions = drive_service.permissions().list(
+                fileId=new_file_id,
+                fields='permissions(emailAddress,role)'
+            ).execute()
+            
+            # If owner doesn't have owner role, grant it
+            owner_has_access = any(
+                p.get('emailAddress') == owner_email and p.get('role') == 'owner'
+                for p in permissions.get('permissions', [])
+            )
+            
+            if not owner_has_access:
+                # Share with owner
+                drive_service.permissions().create(
+                    fileId=new_file_id,
+                    body={
+                        'type': 'user',
+                        'role': 'writer',
+                        'emailAddress': owner_email
+                    },
+                    sendNotificationEmail=False
+                ).execute()
+        except Exception as e:
+            print(f"   ⚠️  Note: Could not share with {owner_email}: {e}")
+    
+    # Open with gspread and return
+    return client.open_by_key(new_file_id)
 
 def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoice_number, df):
     """Populate invoice with data."""
@@ -277,22 +337,14 @@ def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoic
     
     return spreadsheet
 
-def share_invoice(client, spreadsheet_id, email_addresses):
+def share_invoice(spreadsheet_id, email_addresses):
     """Share invoice with one or more email addresses.
     
     Args:
-        client: gspread client
         spreadsheet_id: ID of the spreadsheet to share
         email_addresses: List of email addresses to share with
     """
-    from googleapiclient.discovery import build
-    
-    creds_path = PROJECT_ROOT / 'credentials/service_account.json'
-    creds = Credentials.from_service_account_file(
-        str(creds_path),
-        scopes=['https://www.googleapis.com/auth/drive']
-    )
-    
+    creds = get_credentials()
     drive_service = build('drive', 'v3', credentials=creds)
     
     for email in email_addresses:
@@ -346,6 +398,7 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     if not owner_email or owner_email == 'YOUR_EMAIL@example.com':
         print_step("⚠️", "Warning: owner_email not configured in config/invoices.json")
         print("   Update the 'owner_email' field to automatically share invoices with yourself.")
+        owner_email = None
     
     # Authenticate
     print_step("🔐", "Authenticating...")
@@ -372,7 +425,7 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     # Copy template
     print_step("📋", "Copying invoice template...")
     template_id = invoice_config['template_sheet_id']
-    new_invoice = copy_template_invoice(client, template_id, invoice_number)
+    new_invoice = copy_template_invoice(client, template_id, invoice_number, owner_email)
     
     # Populate invoice
     print_step("✏️", "Populating invoice...")
@@ -380,7 +433,7 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     
     # Prepare email list (always include owner, plus any additional)
     emails_to_share = []
-    if owner_email and owner_email != 'YOUR_EMAIL@example.com':
+    if owner_email:
         emails_to_share.append(owner_email)
     if additional_emails:
         emails_to_share.extend(additional_emails)
@@ -388,7 +441,7 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     # Share with all emails
     if emails_to_share:
         print_step("📧", "Sharing invoice...")
-        share_invoice(client, new_invoice.id, emails_to_share)
+        share_invoice(new_invoice.id, emails_to_share)
     
     # Save metadata
     metadata = {
