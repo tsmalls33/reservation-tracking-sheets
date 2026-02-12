@@ -278,20 +278,35 @@ def copy_template_invoice(client, template_id, invoice_number, owner_email=None)
     return spreadsheet
 
 def generate_pdf_export_link(spreadsheet_id):
-    """Generate a direct link to download the spreadsheet as PDF.
+    """Generate a direct link to export the spreadsheet as PDF.
     
-    This uses the Google Sheets print/export URL which opens the file
-    ready for download/print as PDF.
+    Uses Google Sheets export endpoint with URL parameters for PDF generation.
+    This creates a direct download link that works for authenticated users.
     
     Args:
         spreadsheet_id: ID of the spreadsheet
         
     Returns:
-        str: URL to open sheet in print/PDF mode
+        str: Direct PDF download URL
     """
-    # Standard Google Sheets URL - when user clicks File > Download > PDF,
-    # they can configure and download. This is more reliable than /export endpoint.
-    return f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/edit#gid=0"
+    # Google Sheets PDF export URL format
+    base_url = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/export"
+    
+    # URL parameters for PDF export
+    params = {
+        'format': 'pdf',           # Export format
+        'size': 'A4',              # Paper size (A4)
+        'portrait': 'true',        # Orientation (portrait)
+        'fitw': 'true',            # Fit to width
+        'gridlines': 'false',      # Hide gridlines
+        'printtitle': 'false',     # Don't print title
+        'sheetnames': 'false',     # Don't print sheet names
+        'pagenum': 'false',        # Don't print page numbers
+        'attachment': 'true',      # Force download (true) vs display in browser (false)
+        'gid': '0'                 # Sheet ID (0 = first sheet)
+    }
+    
+    return f"{base_url}?{urlencode(params)}"
 
 def cleanup_template_before_populate(worksheet, invoice_config):
     """Clear ALL cells that will be touched during invoice population.
@@ -495,9 +510,9 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     populate_invoice(client, new_invoice, invoice_config, apartment_info, invoice_number, invoice_date, df, commission_total)
     
     # Generate PDF export link using template_sheet_id from config
-    print_step("📄", "Generating PDF link...")
+    print_step("📄", "Generating PDF export link...")
     pdf_link = generate_pdf_export_link(template_id)
-    print_step("✅", f"PDF link ready (opens sheet for File > Download > PDF)")
+    print_step("✅", f"Direct PDF download link ready")
     
     # Prepare email list (always include owner, plus any additional)
     emails_to_share = []
@@ -526,13 +541,13 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     print_header("✅ INVOICE CREATED", "=")
     print(f"Invoice Number: {invoice_number}")
     print(f"Invoice Date: {invoice_date}")
-    print(f"\n📄 Open Invoice (then File > Download > PDF):")
+    print(f"\n📄 Direct PDF Download Link:")
     print(f"   {pdf_link}")
-    print(f"\n🔗 Direct Spreadsheet Link:")
+    print(f"\n🔗 View/Edit Spreadsheet:")
     print(f"   {new_invoice.url}")
     if emails_to_share:
         print(f"\n📤 Accessible by: {', '.join(emails_to_share)}")
-    print(f"\nℹ️  To download as PDF: Open link above, then File > Download > PDF")
+    print(f"\nℹ️  Click the PDF link above to download invoice as PDF")
     print()
     
     return invoice_number, pdf_link
