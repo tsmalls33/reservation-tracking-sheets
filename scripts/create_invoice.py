@@ -267,12 +267,20 @@ def copy_template_invoice(client, template_id, invoice_number, owner_email=None)
         fields='parents'
     ).execute()
     
-    # Copy file using Drive API - stays in same folder as template
+   # Get the parent folder(s) of the template
+    template_parents = template_file.get('parents', [])
+
+   # Copy file and specify parent folder to ensure it goes to owner's Drive
+    copy_body = {'name': f"Invoice {invoice_number}"}
+    if template_parents:
+        # Use same parent folder as template (your Drive)
+        copy_body['parents'] = template_parents
+
     copied_file = drive_service.files().copy(
         fileId=template_id,
-        body={'name': f"Invoice {invoice_number}"}
+        body=copy_body
     ).execute()
-    
+ 
     # Get the new file ID
     new_file_id = copied_file['id']
     
