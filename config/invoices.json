@@ -32,13 +32,13 @@
     "renta_mensual": "F6"
   },
   "invoice_mapping": {
-    "invoice_number": "B14",
+    "invoice_number": "B16",
     "client_name": "E7",
     "property_name": "B22",
     "table_start_row": 26,
     "table_start_col": "A",
-    "total_rent_cell": "B40",
-    "total_profit_cell": "C40",
-    "total_fee_cell": "G36"
+    "total_rent_cell": "",
+    "total_profit_cell": "",
+    "total_fee_cell": "H36"
   }
 }
