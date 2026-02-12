@@ -18,6 +18,11 @@
       "invoice_code": "GRAN", 
       "client_name": "Tetiana", 
       "property_name": "Apartamento Granada"
+    },
+    "duplex": {
+      "invoice_code": "DUP",
+      "client_name": "TRANSWALTER S.L.", 
+      "property_name": "Plaza Sant Joan 17"
     }
   },
   "source_cells": {
@@ -27,13 +32,13 @@
     "renta_mensual": "F6"
   },
   "invoice_mapping": {
-    "invoice_number": "B1",
-    "client_name": "A4",
-    "property_name": "B4",
-    "table_start_row": 7,
+    "invoice_number": "B14",
+    "client_name": "E7",
+    "property_name": "B22",
+    "table_start_row": 26,
     "table_start_col": "A",
-    "total_rent_cell": "B20",
-    "total_profit_cell": "C20",
-    "total_fee_cell": "E20"
+    "total_rent_cell": "B40",
+    "total_profit_cell": "C40",
+    "total_fee_cell": "G36"
   }
 }
