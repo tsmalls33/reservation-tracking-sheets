@@ -305,57 +305,78 @@ def generate_pdf_export_link(spreadsheet_id, sheet_name="Sheet1"):
     
     return f"{base_url}?{urlencode(params)}"
 
-def cleanup_template_before_populate(client, spreadsheet, invoice_config):
-    """Clear any existing data from template before populating.
+def cleanup_template_before_populate(worksheet, invoice_config, num_months):
+    """Clear ALL cells that will be touched during invoice population.
     
-    This ensures the template is clean before we add new invoice data.
+    This ensures the template is completely clean before we add new data.
+    Clears exactly what will be written to prevent leftover data.
     
     Args:
-        client: gspread client
-        spreadsheet: The spreadsheet object
+        worksheet: The worksheet object
         invoice_config: Invoice configuration
+        num_months: Number of months (to calculate table size)
     """
-    worksheet = spreadsheet.sheet1
     mapping = invoice_config['invoice_mapping']
     
-    # Clear header fields
-    header_ranges = [
-        mapping['invoice_number'],
-        mapping['invoice_date'],
-        mapping['client_name'],
-        mapping.get('client_address', ''),
-        mapping.get('client_zip_code', ''),
-        mapping.get('client_city', ''),
-        mapping.get('client_id', ''),
-        mapping['property_name']
+    # Collect all individual cells to clear
+    cells_to_clear = [
+        mapping['invoice_number'],      # B16
+        mapping['invoice_date'],        # B14
+        mapping['client_name'],         # E7
+        mapping['property_name'],       # B22
     ]
     
-    # Filter out empty mappings
-    header_ranges = [r for r in header_ranges if r]
+    # Add optional client detail cells if present in mapping
+    optional_cells = [
+        'client_address',   # E8
+        'client_zip_code',  # E9
+        'client_city',      # E10
+        'client_id'         # E11
+    ]
     
-    for range_name in header_ranges:
-        worksheet.update(values=[['']], range_name=range_name)
+    for cell_key in optional_cells:
+        if cell_key in mapping and mapping[cell_key]:
+            cells_to_clear.append(mapping[cell_key])
     
-    # Clear commission total cell
+    # Add commission total cell
     if 'commission_total_cell' in mapping:
-        worksheet.update(values=[['']], range_name=mapping['commission_total_cell'])
+        cells_to_clear.append(mapping['commission_total_cell'])  # H36
     
-    # Clear table data area (use a reasonable range)
-    # Assuming max 20 rows of data (adjust if needed)
-    table_start_row = mapping['table_start_row']
-    table_start_col = mapping['table_start_col']
+    # Clear all individual cells in one batch update
+    updates = []
+    for cell in cells_to_clear:
+        updates.append({
+            'range': cell,
+            'values': [['']]
+        })
     
-    # Clear up to 20 rows, 5 columns (month, rent, profit, fee%, fee amount)
-    num_rows = 20
+    # Clear the table area (data rows + TOTAL row)
+    # Table has num_months + 1 rows (for TOTAL)
+    table_start_row = mapping['table_start_row']  # 26
+    table_start_col = mapping['table_start_col']  # A
+    
+    # DataFrame has 5 columns: month, rent, profit, fee_percent, fee_amount
     num_cols = 5
+    num_rows = num_months + 1  # Include TOTAL row
     
+    # Calculate end column (A + 5 columns = E)
     end_col_num = ord(table_start_col) + num_cols - 1
     end_col = chr(end_col_num)
     end_row = table_start_row + num_rows - 1
     
-    range_name = f"{table_start_col}{table_start_row}:{end_col}{end_row}"
-    empty_data = [[''] * num_cols for _ in range(num_rows)]
-    worksheet.update(values=empty_data, range_name=range_name)
+    table_range = f"{table_start_col}{table_start_row}:{end_col}{end_row}"
+    empty_table_data = [[''] * num_cols for _ in range(num_rows)]
+    
+    updates.append({
+        'range': table_range,
+        'values': empty_table_data
+    })
+    
+    # Execute batch update
+    worksheet.batch_update(updates)
+    
+    print(f"   → Cleared {len(cells_to_clear)} individual cells")
+    print(f"   → Cleared table range {table_range} ({num_rows} rows x {num_cols} cols)")
 
 def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoice_number, invoice_date, df, commission_total):
     """Populate invoice with data.
@@ -487,9 +508,10 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     new_invoice = copy_template_invoice(client, template_id, invoice_number, owner_email)
     
     # Clean template BEFORE populating (ensures blank slate)
-    print_step("🧹", "Preparing clean template...")
+    print_step("🧹", "Cleaning template (clearing cells that will be written)...")
     try:
-        cleanup_template_before_populate(client, new_invoice, invoice_config)
+        worksheet = new_invoice.sheet1
+        cleanup_template_before_populate(worksheet, invoice_config, len(months))
         print_step("✅", "Template cleaned")
     except Exception as e:
         print_step("⚠️", f"Could not clean template: {e}")
