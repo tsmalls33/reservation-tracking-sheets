@@ -232,29 +232,19 @@ def extract_month_data(client, apartment_config, invoice_config, month_key, year
 def create_invoice_dataframe(month_data_list):
     """Create DataFrame from extracted month data.
     
-    Returns DataFrame with TOTAL row included.
-    The totals appear automatically right after the last month row.
+    Returns DataFrame with only month rows (no TOTAL row).
+    The commission total is calculated and returned separately.
+    
+    Returns:
+        tuple: (DataFrame with month rows only, commission total)
     """
     df = pd.DataFrame(month_data_list)
     
-    # Calculate totals
-    total_rent = df['rent'].sum()
-    total_profit = df['profit'].sum()
-    total_fee = df['fee_amount'].sum()
+    # Calculate total commission
+    commission_total = df['fee_amount'].sum()
     
-    # Add totals row
-    totals = {
-        'month': 'TOTAL',
-        'rent': total_rent,
-        'profit': total_profit,
-        'fee_percent': '',
-        'fee_amount': total_fee
-    }
-    
-    df = pd.concat([df, pd.DataFrame([totals])], ignore_index=True)
-    
-    # Return df with totals and the commission total separately
-    return df, total_fee
+    # Return DataFrame without TOTAL row, and the commission total separately
+    return df, commission_total
 
 def copy_template_invoice(client, template_id, invoice_number, owner_email=None):
     """Use the shared template directly and just rename it.
@@ -312,7 +302,7 @@ def cleanup_template_before_populate(worksheet, invoice_config):
     """Clear ALL cells that will be touched during invoice population.
     
     This clears cell content while preserving formatting (borders, colors, styles).
-    Always clears 13 rows (12 months + TOTAL) to handle max invoice size.
+    Always clears 12 rows for potential 12 months of data (no TOTAL row).
     
     Args:
         worksheet: The worksheet object
@@ -344,13 +334,13 @@ def cleanup_template_before_populate(worksheet, invoice_config):
     if 'commission_total_cell' in mapping:
         ranges_to_clear.append(mapping['commission_total_cell'])  # H36
     
-    # Add the table area - ALWAYS 13 rows (12 months + TOTAL)
+    # Add the table area - ALWAYS 12 rows for months (no TOTAL row)
     table_start_row = mapping['table_start_row']  # 26
     table_start_col = mapping['table_start_col']  # A
     
     # DataFrame has 5 columns: month, rent, profit, fee_percent, fee_amount
     num_cols = 5
-    num_rows = 13  # Always clear for 12 months + TOTAL row
+    num_rows = 12  # Always clear for 12 months (no TOTAL row)
     
     # Calculate end column (A + 5 columns = E)
     end_col_num = ord(table_start_col) + num_cols - 1
@@ -377,7 +367,7 @@ def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoic
         apartment_info: Apartment info from config
         invoice_number: Invoice number
         invoice_date: Invoice creation date (formatted string)
-        df: DataFrame with month data (includes TOTAL row)
+        df: DataFrame with month data (no TOTAL row)
         commission_total: Total commission amount
     """
     worksheet = spreadsheet.sheet1  # Assume first sheet
@@ -403,7 +393,7 @@ def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoic
     if 'client_id' in apartment_info and 'client_id' in mapping:
         worksheet.update(values=[[apartment_info['client_id']]], range_name=mapping['client_id'])
     
-    # Write table data (includes TOTAL row)
+    # Write table data (only month rows, no TOTAL row)
     table_start_row = mapping['table_start_row']
     table_start_col = mapping['table_start_col']
     
@@ -419,7 +409,6 @@ def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoic
     range_name = f"{table_start_col}{table_start_row}:{end_col}{end_row}"
     
     # Use value_input_option='USER_ENTERED' to let Sheets interpret the data types
-    # This prevents the "TOTAL" from appearing in A1
     worksheet.update(values=table_data, range_name=range_name, value_input_option='USER_ENTERED')
     
     # Write commission total separately (H36)
@@ -487,7 +476,7 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
         # Small delay between months to avoid rate limits
         time.sleep(0.5)
     
-    # Create DataFrame (includes TOTAL row automatically)
+    # Create DataFrame (no TOTAL row)
     df, commission_total = create_invoice_dataframe(month_data_list)
     print_step("✅", "Data aggregated")
     print(f"   Commission Total: {commission_total:.2f}")
