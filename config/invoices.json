@@ -1,6 +1,7 @@
 {
   "template_sheet_id": "REPLACE_WITH_INVOICE_TEMPLATE_SHEET_ID",
   "output_folder": "invoices",
+  "owner_email": "YOUR_EMAIL@example.com",
   "apartments": {
     "mediona": {
       "invoice_code": "MED",
