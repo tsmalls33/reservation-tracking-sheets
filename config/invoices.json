@@ -12,6 +12,11 @@
       "invoice_code": "SDOM",
       "client_name": "Alba",
       "property_name": "Apartamento Sant Domènec"
+    },
+    "granada": {
+      "invoice_code": "GRAN", 
+      "client_name": "Tetiana", 
+      "property_name": "Apartamento Granada"
     }
   },
   "source_cells": {
@@ -26,8 +31,8 @@
     "property_name": "B4",
     "table_start_row": 7,
     "table_start_col": "A",
-    "total_rent_cell": "B14",
-    "total_profit_cell": "C14",
-    "total_fee_cell": "E14"
+    "total_rent_cell": "B20",
+    "total_profit_cell": "C20",
+    "total_fee_cell": "E20"
   }
 }
