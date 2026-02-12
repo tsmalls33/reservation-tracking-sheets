@@ -230,7 +230,11 @@ def extract_month_data(client, apartment_config, invoice_config, month_key, year
     }
 
 def create_invoice_dataframe(month_data_list):
-    """Create DataFrame from extracted month data."""
+    """Create DataFrame from extracted month data.
+    
+    Returns DataFrame with TOTAL row included.
+    The totals appear automatically right after the last month row.
+    """
     df = pd.DataFrame(month_data_list)
     
     # Calculate totals
@@ -249,8 +253,8 @@ def create_invoice_dataframe(month_data_list):
     
     df = pd.concat([df, pd.DataFrame([totals])], ignore_index=True)
     
-    # Return df and calculated totals separately
-    return df, {'rent': total_rent, 'profit': total_profit, 'fee': total_fee}
+    # Return df with totals and the commission total separately
+    return df, total_fee
 
 def copy_template_invoice(client, template_id, invoice_number, owner_email=None):
     """Use the shared template directly and just rename it.
@@ -316,25 +320,25 @@ def cleanup_template_before_populate(client, spreadsheet, invoice_config):
     
     # Clear header fields
     header_ranges = [
+        mapping['invoice_number'],
+        mapping['invoice_date'],
         mapping['client_name'],
-        mapping['property_name'],
-        mapping['invoice_number']
+        mapping.get('client_address', ''),
+        mapping.get('client_zip_code', ''),
+        mapping.get('client_city', ''),
+        mapping.get('client_id', ''),
+        mapping['property_name']
     ]
+    
+    # Filter out empty mappings
+    header_ranges = [r for r in header_ranges if r]
     
     for range_name in header_ranges:
         worksheet.update(values=[['']], range_name=range_name)
     
-    # Clear total cells if they exist in config
-    total_cells = []
-    if 'total_rent_cell' in mapping:
-        total_cells.append(mapping['total_rent_cell'])
-    if 'total_profit_cell' in mapping:
-        total_cells.append(mapping['total_profit_cell'])
-    if 'total_fee_cell' in mapping:
-        total_cells.append(mapping['total_fee_cell'])
-    
-    for cell in total_cells:
-        worksheet.update(values=[['']], range_name=cell)
+    # Clear commission total cell
+    if 'commission_total_cell' in mapping:
+        worksheet.update(values=[['']], range_name=mapping['commission_total_cell'])
     
     # Clear table data area (use a reasonable range)
     # Assuming max 20 rows of data (adjust if needed)
@@ -353,7 +357,7 @@ def cleanup_template_before_populate(client, spreadsheet, invoice_config):
     empty_data = [[''] * num_cols for _ in range(num_rows)]
     worksheet.update(values=empty_data, range_name=range_name)
 
-def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoice_number, df, totals):
+def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoice_number, invoice_date, df, commission_total):
     """Populate invoice with data.
     
     Args:
@@ -362,23 +366,38 @@ def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoic
         invoice_config: Invoice configuration
         apartment_info: Apartment info from config
         invoice_number: Invoice number
-        df: DataFrame with month data
-        totals: Dict with total values {'rent': X, 'profit': Y, 'fee': Z}
+        invoice_date: Invoice creation date (formatted string)
+        df: DataFrame with month data (includes TOTAL row)
+        commission_total: Total commission amount
     """
     worksheet = spreadsheet.sheet1  # Assume first sheet
     
     mapping = invoice_config['invoice_mapping']
     
     # Write header info
+    worksheet.update(values=[[invoice_number]], range_name=mapping['invoice_number'])
+    worksheet.update(values=[[invoice_date]], range_name=mapping['invoice_date'])
     worksheet.update(values=[[apartment_info['client_name']]], range_name=mapping['client_name'])
     worksheet.update(values=[[apartment_info['property_name']]], range_name=mapping['property_name'])
-    worksheet.update(values=[[invoice_number]], range_name=mapping['invoice_number'])
     
-    # Write table data
+    # Write optional client details if present
+    if 'client_address' in apartment_info and 'client_address' in mapping:
+        worksheet.update(values=[[apartment_info['client_address']]], range_name=mapping['client_address'])
+    
+    if 'client_zip_code' in apartment_info and 'client_zip_code' in mapping:
+        worksheet.update(values=[[apartment_info['client_zip_code']]], range_name=mapping['client_zip_code'])
+    
+    if 'client_city' in apartment_info and 'client_city' in mapping:
+        worksheet.update(values=[[apartment_info['client_city']]], range_name=mapping['client_city'])
+    
+    if 'client_id' in apartment_info and 'client_id' in mapping:
+        worksheet.update(values=[[apartment_info['client_id']]], range_name=mapping['client_id'])
+    
+    # Write table data (includes TOTAL row)
     table_start_row = mapping['table_start_row']
     table_start_col = mapping['table_start_col']
     
-    # Prepare table data (all rows including TOTAL)
+    # Prepare table data - convert DataFrame to list of lists
     table_data = df.values.tolist()
     
     # Calculate range
@@ -388,21 +407,15 @@ def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoic
     end_row = table_start_row + len(df) - 1
     
     range_name = f"{table_start_col}{table_start_row}:{end_col}{end_row}"
-    worksheet.update(values=table_data, range_name=range_name)
     
-    # Write total cells separately as plain floats (if defined in mapping)
-    # This preserves the cell's number formatting
-    if 'total_rent_cell' in mapping:
-        worksheet.update(values=[[totals['rent']]], range_name=mapping['total_rent_cell'])
-        print(f"   → Total Rent ({mapping['total_rent_cell']}): {totals['rent']:.2f}")
+    # Use value_input_option='USER_ENTERED' to let Sheets interpret the data types
+    # This prevents the "TOTAL" from appearing in A1
+    worksheet.update(values=table_data, range_name=range_name, value_input_option='USER_ENTERED')
     
-    if 'total_profit_cell' in mapping:
-        worksheet.update(values=[[totals['profit']]], range_name=mapping['total_profit_cell'])
-        print(f"   → Total Profit ({mapping['total_profit_cell']}): {totals['profit']:.2f}")
-    
-    if 'total_fee_cell' in mapping:
-        worksheet.update(values=[[totals['fee']]], range_name=mapping['total_fee_cell'])
-        print(f"   → Total Fee ({mapping['total_fee_cell']}): {totals['fee']:.2f}")
+    # Write commission total separately (H36)
+    if 'commission_total_cell' in mapping:
+        worksheet.update(values=[[commission_total]], range_name=mapping['commission_total_cell'])
+        print(f"   → Commission Total ({mapping['commission_total_cell']}): {commission_total:.2f}")
 
 def save_invoice_metadata(apartment, invoice_number, invoice_data):
     """Save invoice metadata locally."""
@@ -446,9 +459,12 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     print_step("🔐", "Authenticating...")
     client = authenticate_sheets()
     
-    # Generate invoice number
+    # Generate invoice number and date
     invoice_number = get_next_invoice_number(apartment, apartment_info['invoice_code'], test=test)
+    invoice_date = datetime.now().strftime('%d/%m/%Y')  # European date format
+    
     print_step("🔢", f"Invoice number: {invoice_number}")
+    print_step("📅", f"Invoice date: {invoice_date}")
     
     # Extract data from each month
     print_step("📅", f"Extracting data for {len(months)} month(s)...")
@@ -460,12 +476,10 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
         # Small delay between months to avoid rate limits
         time.sleep(0.5)
     
-    # Create DataFrame and calculate totals
-    df, totals = create_invoice_dataframe(month_data_list)
+    # Create DataFrame (includes TOTAL row automatically)
+    df, commission_total = create_invoice_dataframe(month_data_list)
     print_step("✅", "Data aggregated")
-    print(f"   Total Rent: {totals['rent']:.2f}")
-    print(f"   Total Profit: {totals['profit']:.2f}")
-    print(f"   Total Fee: {totals['fee']:.2f}")
+    print(f"   Commission Total: {commission_total:.2f}")
     
     # Copy template
     print_step("📋", "Copying invoice template...")
@@ -482,7 +496,7 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     
     # Populate invoice
     print_step("✏️", "Populating invoice...")
-    populate_invoice(client, new_invoice, invoice_config, apartment_info, invoice_number, df, totals)
+    populate_invoice(client, new_invoice, invoice_config, apartment_info, invoice_number, invoice_date, df, commission_total)
     
     # Generate PDF export link (after populating, so it contains data)
     print_step("📄", "Generating PDF export link...")
@@ -499,6 +513,7 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     # Save metadata
     metadata = {
         'invoice_number': invoice_number,
+        'invoice_date': invoice_date,
         'apartment': apartment,
         'months': months,
         'year': year,
@@ -508,16 +523,13 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
         'spreadsheet_url': new_invoice.url,
         'pdf_export_link': pdf_link,
         'shared_with': emails_to_share,
-        'totals': {
-            'rent': totals['rent'],
-            'profit': totals['profit'],
-            'fee': totals['fee']
-        }
+        'commission_total': commission_total
     }
     save_invoice_metadata(apartment, invoice_number, metadata)
     
     print_header("✅ INVOICE CREATED", "=")
     print(f"Invoice Number: {invoice_number}")
+    print(f"Invoice Date: {invoice_date}")
     print(f"\n📄 PDF Export Link (open to download):")
     print(f"   {pdf_link}")
     print(f"\n🔗 View/Edit Spreadsheet:")
