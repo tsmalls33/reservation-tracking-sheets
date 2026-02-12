@@ -111,6 +111,25 @@ def parse_financial_value(value):
         print(f"   ⚠️  Warning: Could not parse '{value}', using 0.0")
         return 0.0
 
+def format_financial_value(value):
+    """Format a float as a financial string (European format with comma as decimal).
+    
+    Args:
+        value: Numeric value
+        
+    Returns:
+        str: Formatted string like "1.234,56"
+    """
+    # Format with 2 decimal places and thousands separator
+    # Python's format uses dot as decimal, so we'll swap after
+    formatted = f"{value:,.2f}"  # e.g., "1,234.56"
+    
+    # Swap: comma -> temp, dot -> comma, temp -> dot
+    # Result: "1.234,56" (European format)
+    formatted = formatted.replace(',', 'TEMP').replace('.', ',').replace('TEMP', '.')
+    
+    return formatted
+
 def get_next_invoice_number(apartment, invoice_code, test=False):
     """Generate next invoice number for apartment.
     
@@ -233,17 +252,24 @@ def create_invoice_dataframe(month_data_list):
     """Create DataFrame from extracted month data."""
     df = pd.DataFrame(month_data_list)
     
+    # Calculate totals
+    total_rent = df['rent'].sum()
+    total_profit = df['profit'].sum()
+    total_fee = df['fee_amount'].sum()
+    
     # Add totals row
     totals = {
         'month': 'TOTAL',
-        'rent': df['rent'].sum(),
-        'profit': df['profit'].sum(),
+        'rent': total_rent,
+        'profit': total_profit,
         'fee_percent': '',
-        'fee_amount': df['fee_amount'].sum()
+        'fee_amount': total_fee
     }
     
     df = pd.concat([df, pd.DataFrame([totals])], ignore_index=True)
-    return df
+    
+    # Return df and calculated totals separately
+    return df, {'rent': total_rent, 'profit': total_profit, 'fee': total_fee}
 
 def copy_template_invoice(client, template_id, invoice_number, owner_email=None):
     """Use the shared template directly and just rename it.
@@ -317,6 +343,18 @@ def cleanup_template_before_populate(client, spreadsheet, invoice_config):
     for range_name in header_ranges:
         worksheet.update(values=[['']], range_name=range_name)
     
+    # Clear total cells if they exist in config
+    total_cells = []
+    if 'total_rent_cell' in mapping:
+        total_cells.append(mapping['total_rent_cell'])
+    if 'total_profit_cell' in mapping:
+        total_cells.append(mapping['total_profit_cell'])
+    if 'total_fee_cell' in mapping:
+        total_cells.append(mapping['total_fee_cell'])
+    
+    for cell in total_cells:
+        worksheet.update(values=[['']], range_name=cell)
+    
     # Clear table data area (use a reasonable range)
     # Assuming max 20 rows of data (adjust if needed)
     table_start_row = mapping['table_start_row']
@@ -334,8 +372,18 @@ def cleanup_template_before_populate(client, spreadsheet, invoice_config):
     empty_data = [[''] * num_cols for _ in range(num_rows)]
     worksheet.update(values=empty_data, range_name=range_name)
 
-def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoice_number, df):
-    """Populate invoice with data."""
+def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoice_number, df, totals):
+    """Populate invoice with data.
+    
+    Args:
+        client: gspread client
+        spreadsheet: Spreadsheet object
+        invoice_config: Invoice configuration
+        apartment_info: Apartment info from config
+        invoice_number: Invoice number
+        df: DataFrame with month data
+        totals: Dict with total values {'rent': X, 'profit': Y, 'fee': Z}
+    """
     worksheet = spreadsheet.sheet1  # Assume first sheet
     
     mapping = invoice_config['invoice_mapping']
@@ -360,6 +408,22 @@ def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoic
     
     range_name = f"{table_start_col}{table_start_row}:{end_col}{end_row}"
     worksheet.update(values=table_data, range_name=range_name)
+    
+    # Write total cells separately (if defined in mapping)
+    if 'total_rent_cell' in mapping:
+        formatted_rent = format_financial_value(totals['rent'])
+        worksheet.update(values=[[formatted_rent]], range_name=mapping['total_rent_cell'])
+        print(f"   → Total Rent ({mapping['total_rent_cell']}): {formatted_rent}")
+    
+    if 'total_profit_cell' in mapping:
+        formatted_profit = format_financial_value(totals['profit'])
+        worksheet.update(values=[[formatted_profit]], range_name=mapping['total_profit_cell'])
+        print(f"   → Total Profit ({mapping['total_profit_cell']}): {formatted_profit}")
+    
+    if 'total_fee_cell' in mapping:
+        formatted_fee = format_financial_value(totals['fee'])
+        worksheet.update(values=[[formatted_fee]], range_name=mapping['total_fee_cell'])
+        print(f"   → Total Fee ({mapping['total_fee_cell']}): {formatted_fee}")
 
 def save_invoice_metadata(apartment, invoice_number, invoice_data):
     """Save invoice metadata locally."""
@@ -417,9 +481,12 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
         # Small delay between months to avoid rate limits
         time.sleep(0.5)
     
-    # Create DataFrame
-    df = create_invoice_dataframe(month_data_list)
+    # Create DataFrame and calculate totals
+    df, totals = create_invoice_dataframe(month_data_list)
     print_step("✅", "Data aggregated")
+    print(f"   Total Rent: {format_financial_value(totals['rent'])}")
+    print(f"   Total Profit: {format_financial_value(totals['profit'])}")
+    print(f"   Total Fee: {format_financial_value(totals['fee'])}")
     
     # Copy template
     print_step("📋", "Copying invoice template...")
@@ -436,7 +503,7 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     
     # Populate invoice
     print_step("✏️", "Populating invoice...")
-    populate_invoice(client, new_invoice, invoice_config, apartment_info, invoice_number, df)
+    populate_invoice(client, new_invoice, invoice_config, apartment_info, invoice_number, df, totals)
     
     # Generate PDF export link (after populating, so it contains data)
     print_step("📄", "Generating PDF export link...")
@@ -461,7 +528,12 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
         'spreadsheet_id': new_invoice.id,
         'spreadsheet_url': new_invoice.url,
         'pdf_export_link': pdf_link,
-        'shared_with': emails_to_share
+        'shared_with': emails_to_share,
+        'totals': {
+            'rent': totals['rent'],
+            'profit': totals['profit'],
+            'fee': totals['fee']
+        }
     }
     save_invoice_metadata(apartment, invoice_number, metadata)
     
