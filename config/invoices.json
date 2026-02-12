@@ -1,0 +1,32 @@
+{
+  "template_sheet_id": "REPLACE_WITH_INVOICE_TEMPLATE_SHEET_ID",
+  "output_folder": "invoices",
+  "apartments": {
+    "mediona": {
+      "invoice_code": "MED",
+      "client_name": "Mediona Properties S.L.",
+      "property_name": "Apartamento Mediona"
+    },
+    "sant-domenec": {
+      "invoice_code": "SDOM",
+      "client_name": "Sant Domènec S.L.",
+      "property_name": "Apartamento Sant Domènec"
+    }
+  },
+  "source_cells": {
+    "ganancia_mensual": "E3",
+    "comision_devomart": "H3",
+    "percentage": "J2",
+    "renta_mensual": "F6"
+  },
+  "invoice_mapping": {
+    "client_name": "B2",
+    "property_name": "C2",
+    "invoice_number": "E2",
+    "table_start_row": 5,
+    "table_start_col": "E",
+    "total_rent_cell": "I11",
+    "total_profit_cell": "J11",
+    "total_fee_cell": "K11"
+  }
+}
