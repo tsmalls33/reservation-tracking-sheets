@@ -316,7 +316,11 @@ def export_invoice_to_pdf(spreadsheet_id, invoice_number):
     return pdf_file['id'], pdf_file.get('webViewLink', '')
 
 def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoice_number, df):
-    """Populate invoice with data."""
+    """Populate invoice with data.
+    
+    Returns:
+        dict: Information about what was populated (for cleanup)
+    """
     worksheet = spreadsheet.sheet1  # Assume first sheet
     
     mapping = invoice_config['invoice_mapping']
@@ -342,7 +346,50 @@ def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoic
     range_name = f"{table_start_col}{table_start_row}:{end_col}{end_row}"
     worksheet.update(values=table_data, range_name=range_name)
     
-    return spreadsheet
+    # Return info about what was populated
+    return {
+        'table_range': range_name,
+        'header_ranges': [
+            mapping['client_name'],
+            mapping['property_name'],
+            mapping['invoice_number']
+        ]
+    }
+
+def cleanup_template(client, spreadsheet, invoice_config, populated_info):
+    """Clear the populated fields to restore template to blank state.
+    
+    Args:
+        client: gspread client
+        spreadsheet: The spreadsheet object
+        invoice_config: Invoice configuration
+        populated_info: Dictionary with ranges that were populated
+    """
+    worksheet = spreadsheet.sheet1
+    mapping = invoice_config['invoice_mapping']
+    
+    # Clear header fields
+    for range_name in populated_info['header_ranges']:
+        worksheet.update(values=[['']], range_name=range_name)
+    
+    # Clear table data
+    table_range = populated_info['table_range']
+    # Parse the range to get number of rows and columns
+    start, end = table_range.split(':')
+    start_row = int(re.search(r'\d+', start).group())
+    end_row = int(re.search(r'\d+', end).group())
+    num_rows = end_row - start_row + 1
+    
+    start_col = re.search(r'[A-Z]+', start).group()
+    end_col = re.search(r'[A-Z]+', end).group()
+    num_cols = ord(end_col) - ord(start_col) + 1
+    
+    # Create empty data
+    empty_data = [[''] * num_cols for _ in range(num_rows)]
+    worksheet.update(values=empty_data, range_name=table_range)
+    
+    # Restore original template title
+    spreadsheet.update_title("TEST template invoice")
 
 def share_invoice(spreadsheet_id, email_addresses):
     """Share invoice with one or more email addresses.
@@ -436,7 +483,7 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     
     # Populate invoice
     print_step("✏️", "Populating invoice...")
-    populate_invoice(client, new_invoice, invoice_config, apartment_info, invoice_number, df)
+    populated_info = populate_invoice(client, new_invoice, invoice_config, apartment_info, invoice_number, df)
     
     # Export to PDF
     print_step("📄", "Exporting to PDF...")
@@ -447,6 +494,14 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
         print_step("⚠️", f"Could not export to PDF: {e}")
         pdf_id, pdf_link = None, None
     
+    # Clean up template (restore to blank state)
+    print_step("🧹", "Cleaning up template...")
+    try:
+        cleanup_template(client, new_invoice, invoice_config, populated_info)
+        print_step("✅", "Template reset to blank state")
+    except Exception as e:
+        print_step("⚠️", f"Could not clean up template: {e}")
+    
     # Prepare email list (always include owner, plus any additional)
     emails_to_share = []
     if owner_email:
@@ -454,14 +509,10 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     if additional_emails:
         emails_to_share.extend(additional_emails)
     
-    # Share with all emails
-    if emails_to_share:
-        print_step("📧", "Sharing invoice...")
-        share_invoice(new_invoice.id, emails_to_share)
-        
-        # Also share PDF if created
-        if pdf_id:
-            share_invoice(pdf_id, emails_to_share)
+    # Share with all emails (only PDF, not the template)
+    if emails_to_share and pdf_id:
+        print_step("📧", "Sharing PDF...")
+        share_invoice(pdf_id, emails_to_share)
     
     # Save metadata
     metadata = {
@@ -481,17 +532,16 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     
     print_header("✅ INVOICE CREATED", "=")
     print(f"Invoice Number: {invoice_number}")
-    print(f"\n🔗 Open in Google Sheets:")
-    print(f"   {new_invoice.url}")
     if pdf_link:
         print(f"\n📄 View PDF:")
         print(f"   {pdf_link}")
-    print(f"\n🆔 Spreadsheet ID: {new_invoice.id}")
+    print(f"\n🆔 PDF ID: {pdf_id}")
     if emails_to_share:
         print(f"\n📤 Shared with: {', '.join(emails_to_share)}")
+    print(f"\nℹ️  Template has been reset and is ready for next invoice")
     print()
     
-    return invoice_number, new_invoice.url
+    return invoice_number, pdf_link
 
 if __name__ == "__main__":
     import argparse
