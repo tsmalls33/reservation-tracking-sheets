@@ -21,7 +21,8 @@ reservation-tracking-sheets/
 │   │   ├── upload.py            # Upload command
 │   │   ├── invoice.py           # Invoice commands
 │   │   ├── config.py            # Config management
-│   │   └── open_project.py      # Open/view commands
+│   │   ├── open_project.py      # Open/view commands
+│   │   └── docs.py              # Documentation command
 │   └── utils/
 │       ├── display.py           # Output formatting
 │       ├── platform.py          # Platform detection
@@ -43,7 +44,7 @@ reservation-tracking-sheets/
 
 ```python
 import click
-from .commands import upload, invoice, config, open_cmd, source
+from .commands import upload, invoice, config, open_project, docs
 
 @click.group()
 @click.version_option(version='2.0.0')
@@ -55,8 +56,8 @@ def cli():
 cli.add_command(upload.upload)
 cli.add_command(invoice.invoice)
 cli.add_command(config.config)
-cli.add_command(open_cmd.open_cmd)
-cli.add_command(source.source)
+cli.add_command(open_project.open_cmd)
+cli.add_command(docs.docs)
 ```
 
 ### Command Modules
@@ -314,6 +315,39 @@ The `\\b` preserves formatting in examples.
 )
 ```
 
+## Help Text Location
+
+**Help texts live in two places:**
+
+1. **Docstrings** in command functions (`cli/commands/*.py`):
+   - Displayed when running `reservations <command> --help`
+   - Written directly in the function docstring
+   - Use `\\b` to preserve formatting
+
+2. **Option help** in `@click.option()` decorators:
+   - Brief descriptions for each option
+   - Displayed in command help output
+
+**Example:**
+```python
+# cli/commands/upload.py
+@click.command()
+@click.argument('csv_files', nargs=-1)
+@click.option('--apartment', '-a', required=True, 
+              help='Apartment name (matches config file)')
+def upload(csv_files, apartment):
+    """Upload reservation CSVs to Google Sheets.
+    
+    Automatically detects platform, processes CSVs,
+    and uploads to configured spreadsheet.
+    
+    \\b
+    Examples:
+      reservations upload data.csv -a downtown-loft
+    """
+    # Implementation
+```
+
 ## Testing
 
 ### Manual Testing
@@ -326,6 +360,7 @@ pip install -e .
 reservations --help
 reservations upload --help
 reservations config list
+reservations docs
 ```
 
 ### Testing Scripts Directly
@@ -349,7 +384,14 @@ import click
 @click.argument('arg')
 @click.option('--option', '-o')
 def new_cmd(arg, option):
-    """New command description."""
+    """New command description.
+    
+    Detailed explanation of what the command does.
+    
+    \\b
+    Examples:
+      reservations new-cmd myarg -o value
+    """
     click.echo(f"Running new command: {arg}, {option}")
 ```
 
@@ -365,6 +407,7 @@ cli.add_command(new_cmd.new_cmd)
 
 ```bash
 reservations new-cmd myarg --option value
+reservations new-cmd --help
 ```
 
 ## Best Practices
@@ -377,6 +420,8 @@ reservations new-cmd myarg --option value
 6. **Validation**: Validate inputs early
 7. **Error handling**: User-friendly error messages
 8. **Progress output**: Show what's happening
+9. **Docstrings**: Write comprehensive help text
+10. **Test help**: Verify `--help` output is clear
 
 ## References
 
