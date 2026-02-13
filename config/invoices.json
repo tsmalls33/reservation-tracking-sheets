@@ -1,44 +1,26 @@
 {
-  "template_sheet_id": "169LxaWrpHVS7lDaZqJ9h4Swv-RO-osN3P6tHdQfkF2I",
-  "working_folder_id": "1LErFW7QURVty7aYAnnhSiUJcUMUwXO11",
+  "template_sheet_id": "TEMPLATE_SHEET_ID",
+  "working_folder_id": "FOLDER_ID",
   "output_folder": "invoices",
-  "owner_email": "tbm.smallwood@gmail.com",
+  "owner_email": "your.email.here@email.com",
   "apartments": {
-    "mediona": {
-      "invoice_code": "MED",
-      "client_name": "Devorah Tellechea & Thomas Smallwood",
+    "apt1": {
+      "invoice_code": "APT1",
+      "client_name": "OWNER_NAME_HERE",
       "client_address": "YOUR_ADDRESS_HERE",
       "client_zip_code": "YOUR_ZIP_CODE",
       "client_city": "YOUR_CITY",
       "client_id": "YOUR_ID_NUMBER",
-      "property_name": "Apartamento Mediona"
+      "property_name": "APARTMENT NAME HERE"
     },
-    "sant-domenec": {
-      "invoice_code": "SDOM",
-      "client_name": "Alba",
+    "apt2": {
+      "invoice_code": "APT1",
+      "client_name": "OWNER_NAME_HERE",
       "client_address": "YOUR_ADDRESS_HERE",
       "client_zip_code": "YOUR_ZIP_CODE",
       "client_city": "YOUR_CITY",
       "client_id": "YOUR_ID_NUMBER",
-      "property_name": "Apartamento Sant Dom\u00e8nec"
-    },
-    "granada": {
-      "invoice_code": "GRAN",
-      "client_name": "Tetiana Horbatiuk",
-      "client_address": "Calle Granada 2",
-      "client_zip_code": "43003",
-      "client_city": "Tarragona",
-      "client_id": "N.I.E. Y3334565L",
-      "property_name": "Apartamento Granada"
-    },
-    "duplex": {
-      "invoice_code": "DUP",
-      "client_name": "TRANSWALTER S.L.",
-      "client_address": "San Joan 17",
-      "client_zip_code": "43003",
-      "client_city": "Tarragona",
-      "client_id": "N.I.F. 12345678",
-      "property_name": "Duplex historico en Part Alta"
+      "property_name": "APARTMENT NAME HERE"
     }
   },
   "source_cells": {
