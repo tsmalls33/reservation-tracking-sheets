@@ -2,8 +2,8 @@ from setuptools import setup, find_packages
 
 setup(
     name="reservations",
-    version="1.0.0",
-    packages=find_packages(),
+    version="2.0.0",
+    packages=find_packages(include=['cli', 'cli.*']),
     py_modules=['main'],
     install_requires=[
         "click>=8.0",
@@ -18,4 +18,3 @@ setup(
     },
     python_requires=">=3.9",
 )
-
