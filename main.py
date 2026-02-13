@@ -235,6 +235,47 @@ def cli():
     pass
 
 
+@cli.command()
+def open():
+    """Open the project root directory in Neovim.
+    
+    Launches Neovim with the project root directory
+    (~/dev/reservation-tracking-sheets) as the working directory.
+    
+    \b
+    Example:
+      reservations open
+    """
+    click.echo(f"📂 Opening project in Neovim: {click.style(str(PROJECT_ROOT), fg='cyan')}")
+    try:
+        # Use os.execvp to replace the current process with nvim
+        # This allows nvim to take over the terminal properly
+        os.chdir(PROJECT_ROOT)
+        os.execvp('nvim', ['nvim', str(PROJECT_ROOT)])
+    except FileNotFoundError:
+        click.echo(click.style("❌ Error: nvim not found. Make sure Neovim is installed.", fg="red"))
+        sys.exit(1)
+    except Exception as e:
+        click.echo(click.style(f"❌ Error opening Neovim: {e}", fg="red"))
+        sys.exit(1)
+
+
+@cli.command()
+def source():
+    """Open the project root directory in Neovim (alias for 'open').
+    
+    Launches Neovim with the project root directory
+    (~/dev/reservation-tracking-sheets) as the working directory.
+    
+    \b
+    Example:
+      reservations source
+    """
+    # Call the open command
+    ctx = click.get_current_context()
+    ctx.invoke(open)
+
+
 @cli.group()
 def config():
     """Manage configuration files for apartments.
