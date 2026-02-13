@@ -1,0 +1,5 @@
+#!/bin/bash
+# Source command to open reservation-tracking-sheets project in Neovim
+# Usage: source reservations
+
+nvim ~/dev/reservation-tracking-sheets
