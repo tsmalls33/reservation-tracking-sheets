@@ -174,7 +174,11 @@ def get_month_tab_name(month_key, language='es'):
     return MONTH_NAMES[month_key][language]
 
 def extract_month_data(client, apartment_config, invoice_config, month_key, year):
-    """Extract financial data from a specific month tab."""
+    """Extract financial data from a specific month tab.
+    
+    Converts the fee percentage to decimal format (15 -> 0.15) so that
+    Google Sheets can properly format it as a percentage.
+    """
     language = apartment_config.get('language', 'es')
     tab_name = get_month_tab_name(month_key, language)
     
@@ -221,11 +225,18 @@ def extract_month_data(client, apartment_config, invoice_config, month_key, year
             data[key] = parse_financial_value(value)
             time.sleep(0.1)  # Small delay to avoid rate limits
     
+    # Get the raw percentage value (e.g., 15.0 from "15%" or 15)
+    raw_percentage = data.get('percentage', 0.0)
+    
+    # Convert to decimal format for Google Sheets percentage formatting
+    # 15 -> 0.15, so when Sheets formats as %, it displays as "15%"
+    fee_percent_decimal = raw_percentage / 100.0
+    
     return {
         'month': MONTH_NAMES[month_key][language],
         'rent': data.get('renta_mensual', 0.0),
         'profit': data.get('ganancia_mensual', 0.0),
-        'fee_percent': data.get('percentage', 0.0),
+        'fee_percent': fee_percent_decimal,  # Now in decimal format (0.15 instead of 15)
         'fee_amount': data.get('comision_devomart', 0.0)
     }
 

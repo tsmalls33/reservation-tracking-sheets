@@ -28,7 +28,7 @@
       "client_address": "Calle Granada 2",
       "client_zip_code": "43003",
       "client_city": "Tarragona",
-      "client_id": "NIE Y3334565L",
+      "client_id": "N.I.E. Y3334565L",
       "property_name": "Apartamento Granada"
     },
     "duplex": {
@@ -37,7 +37,7 @@
       "client_address": "San Joan 17",
       "client_zip_code": "43003",
       "client_city": "Tarragona",
-      "client_id": "NIF 12345678",
+      "client_id": "N.I.F. 12345678",
       "property_name": "Duplex historico en Part Alta"
     }
   },

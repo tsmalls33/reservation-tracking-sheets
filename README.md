@@ -1,162 +1,316 @@
+# 📊 Reservation Tracking Sheets
 
-# Reservation Tracking Sheets Automation
+> **Automate Airbnb and Booking.com reservations to Google Sheets with intelligent processing and invoice generation**
 
-Automate processing and uploading of Airbnb and Booking.com reservation data to Google Sheets.
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+---
+
+## ✨ Features
+
+- 🤖 **Auto-Detection**: Automatically detects Airbnb or Booking.com CSV formats
+- 📅 **Smart Processing**: Filters cancelled bookings, normalizes dates, standardizes formats
+- 📤 **Intelligent Upload**: Only updates affected months, preserves sheet formatting
+- 🧾 **Invoice Generation**: Create professional invoices from reservation data
+- 🧹 **Auto-Cleanup**: Temporary files automatically deleted after processing
+- 🌍 **Multi-Language**: Supports English and Spanish month names
+- ⚡ **One Command**: Process multiple files and upload in a single command
 
 ## 🚀 Quick Start
 
-    # Process and upload in one command
-    reservations oneshot your-booking-file.xls -a mediona -y 2025 --test -H
+### Installation
 
-## 📋 Prerequisites
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/reservation-tracking-sheets.git
+cd reservation-tracking-sheets
 
-- Python 3.9+
-- Google Cloud service account with Sheets API enabled
-- Required Python packages: pandas, gspread, google-auth, xlrd, openpyxl, click
+# Install dependencies
+pip install -r requirements.txt
 
-## 🛠️ Installation
+# Install CLI in development mode
+pip install -e .
+```
 
-    pip install -r requirements.txt
-    chmod +x main.py
+### Setup
 
-## 📂 Project Structure
+1. **Google Cloud Setup**
+   - Create a [Google Cloud Project](https://console.cloud.google.com/)
+   - Enable Google Sheets API
+   - Create a service account and download JSON key
+   - Save as `credentials/service_account.json`
 
-    reservation-tracking-sheets/
-    ├── config/
-    │   ├── mediona_2025.json          # Production config
-    │   └── mediona_2025_test.json     # Test config
-    ├── credentials/
-    │   └── service_account.json       # Google service account key
-    ├── scripts/
-    │   ├── process_airbnb.py          # Clean Airbnb exports
-    │   ├── process_booking.py         # Clean Booking.com exports
-    │   ├── merge_data.py              # Merge multiple sources
-    │   └── upload_to_sheets.py        # Upload to Google Sheets
-    ├── data/
-    │   ├── raw/                       # Downloaded CSVs
-    │   ├── processed/                 # Cleaned outputs
-    │   └── temp/                      # Temporary files
-    └── main.py                        # CLI entry point
+2. **Share Your Sheet**
+   - Open your Google Sheet
+   - Share with service account email (found in JSON key)
+   - Grant "Editor" access
+
+3. **Configure Apartment**
+   ```bash
+   reservations config create -a downtown-loft -y 2026
+   ```
+
+### Basic Usage
+
+```bash
+# Upload single CSV
+reservations upload airbnb_export.csv -a downtown-loft
+
+# Upload multiple files (auto-merges)
+reservations upload airbnb.csv booking.csv -a downtown-loft
+
+# Create invoice for specific months
+reservations invoice create -a downtown-loft -m january,february
+
+# View apartment's Google Sheet
+reservations open -a downtown-loft
+```
+
+## 📖 Documentation
+
+- **[Installation Guide](docs/INSTALLATION.md)** - Detailed setup instructions
+- **[CLI Architecture](docs/CLI_ARCHITECTURE.md)** - Technical overview of the CLI structure
+- **[Configuration Guide](docs/CONFIGURATION.md)** - Setting up apartment configs and mappings
+- **[Data Management](docs/DATA_MANAGEMENT.md)** - How temporary files are handled
+- **[Invoice System](docs/INVOICES.md)** - Creating and managing invoices
 
 ## 🎯 Commands
 
-### oneshot - All-in-One Processing & Upload
+### Upload Reservations
 
-Process files and upload to Google Sheets in one command.
+```bash
+reservations upload [FILES...] -a APARTMENT [-y YEAR] [--test] [--hard-replace]
+```
 
-    reservations oneshot FILE [FILE...] -a APARTMENT -y YEAR [OPTIONS]
+**Options:**
+- `-a, --apartment` - Apartment name (required)
+- `-y, --year` - Year for config (default: 2026)
+- `--test` - Use test configuration
+- `-H, --hard-replace` - Clear all month tabs before upload
 
-Arguments: FILE - One or more CSV/XLS/XLSX files to process
+**Examples:**
+```bash
+# Single file
+reservations upload bookings.csv -a downtown-loft
 
-Options: -a, --apartment (required), -y, --year (default: 2026), --test (Use test config), -H, --hard-replace (Clear ALL tabs)
+# Multiple files (auto-merges Airbnb + Booking.com)
+reservations upload airbnb.csv booking.csv -a downtown-loft
 
-Examples:
+# Test mode
+reservations upload data.csv -a downtown-loft --test
 
-    reservations oneshot booking.xls -a mediona -y 2025 --test -H
-    reservations oneshot airbnb.csv booking.xlsx -a mediona -y 2025
-    reservations oneshot data.csv -a mediona -y 2025 -H
+# Clear all months first
+reservations upload data.csv -a downtown-loft --hard-replace
+```
 
-### process - Process Only (No Upload)
+### Invoice Management
 
-    reservations process PLATFORM FILE [-o OUTPUT]
+```bash
+# Create invoice
+reservations invoice create -a APARTMENT -m MONTHS [-y YEAR] [--test]
 
-Arguments: PLATFORM (airbnb or booking), FILE (Path to raw export)
+# List invoices
+reservations invoice list -a APARTMENT
 
-Options: -o, --output (Output path)
+# Configure invoice settings
+reservations invoice config
+```
 
-Examples:
+**Examples:**
+```bash
+# Single month
+reservations invoice create -a downtown-loft -m january
 
-    reservations process booking my-export.xls
-    reservations process airbnb reservations.csv -o custom-output.csv
+# Multiple months
+reservations invoice create -a downtown-loft -m january,february,march
 
-### upload - Upload Only (Pre-processed CSV)
+# Quarter
+reservations invoice create -a downtown-loft -m q1
 
-    reservations upload FILE -a APARTMENT -y YEAR [OPTIONS]
+# Entire year
+reservations invoice create -a downtown-loft -m all
+```
 
-Arguments: FILE (Path to processed CSV)
+### Configuration
 
-Options: -a, --apartment (required), -y, --year, --test, -H, --hard-replace
+```bash
+# List configurations
+reservations config list
 
-Examples:
+# Create new configuration
+reservations config create -a APARTMENT -y YEAR
 
-    reservations upload processed.csv -a mediona -y 2025 --test
+# Delete configuration
+reservations config delete CONFIGS...
+```
 
-## 📊 Supported File Formats
+### Quick Access
 
-✅ CSV (.csv) | ✅ Excel 97-2003 (.xls) | ✅ Excel 2007+ (.xlsx)
+```bash
+# Open project in Neovim
+reservations open
 
-## 🏷️ Platform Detection
+# View apartment's Google Sheet (displays clickable link)
+reservations open -a downtown-loft
+```
 
-Automatically detects platform based on filename or content.
+## 🏗️ Project Structure
 
-Airbnb: Filename/content contains airbnb, confirmación, hm
+```
+reservation-tracking-sheets/
+├── cli/                       # Modular CLI commands
+│   ├── commands/              # Individual command modules
+│   │   ├── upload.py          # Upload command
+│   │   ├── invoice.py         # Invoice management
+│   │   ├── config.py          # Config management
+│   │   └── open_project.py    # Project/sheet access
+│   └── utils/                 # Shared utilities
+├── scripts/                   # Data processing scripts
+│   ├── process_airbnb.py      # Airbnb CSV processor
+│   ├── process_booking.py     # Booking.com processor
+│   ├── merge_data.py          # Multi-file merger
+│   ├── upload_to_sheets.py    # Google Sheets uploader
+│   └── create_invoice.py      # Invoice generator
+├── config/                    # Apartment configurations
+│   ├── downtown-loft_2026.json
+│   └── invoices.json
+├── credentials/               # Google service account
+│   └── service_account.json
+├── docs/                      # Documentation
+└── data/temp/                 # Auto-deleted temp files
+```
 
-Booking.com: Filename/content contains booking, reservation, invoice
+## 🔧 Configuration
 
-## 🔧 Configuration Files
+Each apartment has a JSON configuration defining:
+- Google Sheet ID
+- Tab names (localized)
+- Cell ranges
+- Column mappings
+- Calculated fields
 
-JSON files define spreadsheet ID, tabs, ranges, and column mappings.
+**Example:** `config/downtown-loft_2026.json`
 
-Example config/mediona_2025_test.json:
-
-    {
-      "spreadsheet_id": "your-spreadsheet-id",
-      "tabs": {
-        "january_reservations": {
-          "tab_name": "January",
-          "start_range": "F11",
-          "columns": ["Actividad", "Pagado", "Entrada", "Salida", "Noches", "Precio", "Check In/Out", "Comision"]
+```json
+{
+  "spreadsheet_id": "1ABC...XYZ",
+  "language": "en",
+  "tabs": {
+    "january_reservations": {
+      "tab_name": "January",
+      "start_range": "F11",
+      "physical_columns": 8,
+      "columns": [
+        "Guest",
+        "Paid",
+        "Check-in",
+        "Check-out",
+        "Nights",
+        "Price",
+        "Cleaning",
+        "Commission"
+      ],
+      "column_mapping": {
+        "Guest": {
+          "csv_field": "Actividad",
+          "sheet_col_offset": 0
+        },
+        "Price": {
+          "csv_fields": ["Precio", "Comision"],
+          "operation": "sum",
+          "sheet_col_offset": 5
         }
       }
     }
+  }
+}
+```
 
-## 📝 Output Format
+See [Configuration Guide](docs/CONFIGURATION.md) for details.
 
-Columns: Actividad (Guest name + count), Entrada (Check-in YYYY-MM-DD), Salida (Check-out YYYY-MM-DD), Noches (Nights), Precio (Price, no currency), Check In/Out (Cleaning fee), Comision (Commission), VAT (Empty)
+## 🎨 Output Format
 
-## 🎨 Features
+Processed data includes:
 
-Smart Processing: Auto-detects platform, handles multiple column formats, strips currency symbols, filters cancelled reservations, converts dates
+| Column | Description | Format |
+|--------|-------------|--------|
+| Guest | Guest name + count | "John Smith (2)" |
+| Paid | Payment status | "Paid" / "Pending" |
+| Check-in | Arrival date | YYYY-MM-DD |
+| Check-out | Departure date | YYYY-MM-DD |
+| Nights | Stay duration | Integer |
+| Price | Booking price | Decimal (no symbol) |
+| Cleaning | Cleaning fee | Decimal (no symbol) |
+| Commission | Platform fee | Decimal (no symbol) |
 
-Smart Upload: Auto-detects months, only clears affected tabs (unless -H), preserves formatting, detailed progress logs
+## 🧾 Invoice Features
 
-## 🔐 Google Sheets Setup
+- **Auto-numbering**: Sequential invoice numbers per apartment
+- **Multi-month**: Combine multiple months in one invoice
+- **PDF Export**: Direct PDF download link
+- **Test Mode**: Separate TEST_ invoice numbering
+- **Metadata**: Local JSON tracking of all invoices
 
-1. Create Google Cloud project
-2. Enable Google Sheets API
-3. Create service account & download JSON key
-4. Save as credentials/service_account.json
-5. Share spreadsheet with service account email (editor access)
+## 🔐 Security
+
+- ✅ Service account credentials stored locally only
+- ✅ Temporary files auto-deleted
+- ✅ No data stored in repository
+- ✅ `.gitignore` includes `credentials/`, `data/`, `invoices/`
 
 ## 🐛 Troubleshooting
 
-Config not found: Check naming {apartment}\_{year}.json or {apartment}\_{year}_test.json in config/
+### ModuleNotFoundError: No module named 'cli'
 
-Worksheet not found: Verify tab names in config match Sheet (ignoring whitespace)
+```bash
+cd ~/path/to/reservation-tracking-sheets
+pip install -e .
+```
 
-Column not found: Check error message for available columns
+### Config not found
 
-Emojis not displaying:
+Check naming: `{apartment}_{year}.json` or `{apartment}_{year}_test.json`
 
-    export LANG=en_US.UTF-8
-    export LC_ALL=en_US.UTF-8
+```bash
+reservations config list  # See available configs
+```
 
-## 📖 Examples
+### Worksheet not found
 
-Typical workflow:
+Verify tab names in config match Google Sheet (whitespace ignored).
 
-    # Download export from Booking.com, then run:
-    reservations oneshot ~/Downloads/booking_export.xls -a mediona -y 2025 --test -H
-    # Output: ✓ Processing → ✓ Filtering → ✓ Uploading → ✓ Complete!
+### Permission denied (Google Sheets)
 
-Multiple sources:
+Ensure service account email has "Editor" access to the spreadsheet.
 
-    reservations oneshot airbnb.csv booking.xls -a mediona -y 2025
+## 🤝 Contributing
 
-## 📄 License
+Contributions welcome! Please:
 
-MIT
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## 👤 Author
+## 📝 License
 
-Thomas - Software Engineer in Barcelona
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Built with [Click](https://click.palletsprojects.com/) for CLI
+- [gspread](https://gspread.readthedocs.io/) for Google Sheets API
+- [pandas](https://pandas.pydata.org/) for data processing
+
+## 📧 Support
+
+For issues and questions:
+- 📫 Open an issue on GitHub
+- 📖 Check the [documentation](docs/)
+- 💡 Review existing issues for solutions
+
+---
+
+**Made with ❤️ for vacation rental managers**

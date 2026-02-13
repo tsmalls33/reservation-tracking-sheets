@@ -4,7 +4,7 @@ import click
 from pathlib import Path
 
 # Project root - available to all CLI modules
-PROJECT_ROOT = Path("/Users/thomas/dev/reservation-tracking-sheets")
+PROJECT_ROOT = Path(__file__).parent.parent.absolute()
 CONFIG_DIR = PROJECT_ROOT / "config"
 
 __version__ = "2.0.0"
@@ -14,29 +14,43 @@ __version__ = "2.0.0"
 @click.version_option(__version__)
 @click.pass_context
 def cli(ctx):
-    """Reservation Tracking System - Automate Airbnb/Booking data to Google Sheets.
+    """Reservation Tracking System - Automate Airbnb/Booking.com to Google Sheets.
     
-    This tool processes reservation CSVs from Airbnb and Booking.com, then uploads
-    them to Google Sheets with dynamic column mapping based on your configuration.
+    Intelligent CSV processing and upload tool for vacation rental managers.
+    Automatically detects platforms, standardizes data, and uploads to Google Sheets
+    with configurable column mappings.
     
     \b
     Features:
-    • Auto-detects platform (Airbnb/Booking.com)
-    • Processes multiple CSVs in one command
+    • Auto-detects Airbnb and Booking.com formats
+    • Processes multiple CSVs in one command (auto-merge)
     • Dynamic column mapping per apartment
-    • Spanish/English month name support
-    • Calculated fields (e.g., sum of Precio + Comision)
-    • Smart clearing (only detected months) or hard replace (all months)
-    • Invoice generation from reservation data
+    • Multi-language support (English/Spanish)
+    • Calculated fields (sum, formulas)
+    • Smart clearing (only modified months)
+    • Invoice generation with PDF export
+    • Auto-cleanup temporary files
     
     \b
-    Example:
-      reservations upload airbnb_jan.csv booking_feb.csv -a mediona -y 2026
+    Quick Start:
+      reservations upload bookings.csv -a downtown-loft
+      reservations invoice create -a downtown-loft -m january,february
+      reservations open -a downtown-loft
+      reservations docs
     
     \b
     Configuration:
-      Configs are stored in config/{apartment}_{year}.json
-      Each config defines spreadsheet ID, tab names, columns, and mappings.
+      Configs: config/{apartment}_{year}.json
+      Each defines spreadsheet ID, tabs, columns, and mappings.
+    
+    \b
+    Documentation:
+      Run 'reservations docs' to view full documentation online.
+      Or see docs/ folder for detailed guides:
+      • INSTALLATION.md - Setup and Google Cloud configuration
+      • CONFIGURATION.md - Apartment config and column mappings
+      • INVOICES.md - Invoice generation and management
+      • CLI_ARCHITECTURE.md - Technical architecture details
     """
     # Ensure context object exists
     ctx.ensure_object(dict)
@@ -46,13 +60,13 @@ def cli(ctx):
 
 def register_commands():
     """Register all command groups and commands."""
-    from .commands import config, invoice, upload, open_project
+    from .commands import config, invoice, upload, open_project, docs
     
     cli.add_command(config.config)
     cli.add_command(invoice.invoice)
     cli.add_command(upload.upload)
     cli.add_command(open_project.open_cmd)
-    cli.add_command(open_project.source)
+    cli.add_command(docs.docs)
 
 
 # Register commands on import
