@@ -48,16 +48,16 @@
     "renta_mensual": "F6"
   },
   "invoice_mapping": {
-    "invoice_number": "D8",
-    "invoice_date": "B9",
+    "invoice_number": "F6",
+    "invoice_date": "F8",
     "client_name": "B12",
     "client_address": "B13",
     "client_zip_code": "B14",
     "client_city": "B15",
-    "client_id": "D12",
-    "property_name": "D15",
-    "table_start_row": 19,
+    "client_id": "B16",
+    "property_name": "D13",
+    "table_start_row": 20,
     "table_start_col": "B",
-    "commission_total_cell": "G32"
+    "commission_total_cell": "G33"
   }
 }
