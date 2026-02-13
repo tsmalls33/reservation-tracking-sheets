@@ -232,94 +232,56 @@ def extract_month_data(client, apartment_config, invoice_config, month_key, year
 def create_invoice_dataframe(month_data_list):
     """Create DataFrame from extracted month data.
     
-    Returns DataFrame with TOTAL row included.
-    The totals appear automatically right after the last month row.
+    Returns DataFrame with only month rows (no TOTAL row).
+    The commission total is calculated and returned separately.
+    
+    Returns:
+        tuple: (DataFrame with month rows only, commission total)
     """
     df = pd.DataFrame(month_data_list)
     
-    # Calculate totals
-    total_rent = df['rent'].sum()
-    total_profit = df['profit'].sum()
-    total_fee = df['fee_amount'].sum()
+    # Calculate total commission
+    commission_total = df['fee_amount'].sum()
     
-    # Add totals row
-    totals = {
-        'month': 'TOTAL',
-        'rent': total_rent,
-        'profit': total_profit,
-        'fee_percent': '',
-        'fee_amount': total_fee
-    }
-    
-    df = pd.concat([df, pd.DataFrame([totals])], ignore_index=True)
-    
-    # Return df with totals and the commission total separately
-    return df, total_fee
+    # Return DataFrame without TOTAL row, and the commission total separately
+    return df, commission_total
 
-def copy_template_invoice(client, template_id, invoice_number, owner_email=None):
-    """Use the shared template directly and just rename it.
-    
-    Since service accounts have no storage, we'll work with a single
-    pre-shared template that gets reused.
-    """
-    # Open the shared template
-    spreadsheet = client.open_by_key(template_id)
-    
-    # Rename it
-    spreadsheet.update_title(f"Invoice {invoice_number}")
-    
-    # Share with owner
-    if owner_email:
-        try:
-            spreadsheet.share(owner_email, perm_type='user', role='writer', notify=False)
-        except Exception as e:
-            print(f"   ⚠️  Could not share with {owner_email}: {e}")
-    
-    return spreadsheet
-
-def generate_pdf_export_link(spreadsheet_id, sheet_name="Sheet1"):
+def generate_pdf_export_link(spreadsheet_id):
     """Generate a direct link to export the spreadsheet as PDF.
+    
+    Uses Google Sheets export endpoint with minimal URL parameters.
     
     Args:
         spreadsheet_id: ID of the spreadsheet
-        sheet_name: Name of the sheet to export (default: first sheet)
         
     Returns:
-        str: Direct URL to download PDF
+        str: Direct PDF download URL
     """
     # Google Sheets PDF export URL format
     base_url = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/export"
     
+    # Minimal URL parameters
     params = {
         'format': 'pdf',
-        'size': 'A4',  # Paper size
-        'portrait': 'true',  # Orientation
-        'fitw': 'true',  # Fit to width
-        'gridlines': 'false',  # Hide gridlines
-        'printtitle': 'false',  # Don't print title
-        'sheetnames': 'false',  # Don't print sheet names
-        'pagenum': 'false',  # Don't print page numbers
-        'attachment': 'false',  # Display in browser instead of download
-        'gid': '0'  # First sheet (sheet ID, not name)
+        'size': 'A4'
     }
     
     return f"{base_url}?{urlencode(params)}"
 
-def cleanup_template_before_populate(worksheet, invoice_config, num_months):
+def cleanup_template_before_populate(worksheet, invoice_config):
     """Clear ALL cells that will be touched during invoice population.
     
-    This ensures the template is completely clean before we add new data.
-    Clears exactly what will be written to prevent leftover data.
+    This clears cell content while preserving formatting (borders, colors, styles).
+    Always clears 12 rows for potential 12 months of data (no TOTAL row).
     
     Args:
         worksheet: The worksheet object
         invoice_config: Invoice configuration
-        num_months: Number of months (to calculate table size)
     """
     mapping = invoice_config['invoice_mapping']
     
-    # Collect all individual cells to clear
-    cells_to_clear = [
+    # Collect all ranges to clear (preserves formatting)
+    ranges_to_clear = [
         mapping['invoice_number'],      # B16
         mapping['invoice_date'],        # B14
         mapping['client_name'],         # E7
@@ -336,28 +298,19 @@ def cleanup_template_before_populate(worksheet, invoice_config, num_months):
     
     for cell_key in optional_cells:
         if cell_key in mapping and mapping[cell_key]:
-            cells_to_clear.append(mapping[cell_key])
+            ranges_to_clear.append(mapping[cell_key])
     
     # Add commission total cell
     if 'commission_total_cell' in mapping:
-        cells_to_clear.append(mapping['commission_total_cell'])  # H36
+        ranges_to_clear.append(mapping['commission_total_cell'])  # H36
     
-    # Clear all individual cells in one batch update
-    updates = []
-    for cell in cells_to_clear:
-        updates.append({
-            'range': cell,
-            'values': [['']]
-        })
-    
-    # Clear the table area (data rows + TOTAL row)
-    # Table has num_months + 1 rows (for TOTAL)
+    # Add the table area - ALWAYS 12 rows for months (no TOTAL row)
     table_start_row = mapping['table_start_row']  # 26
     table_start_col = mapping['table_start_col']  # A
     
     # DataFrame has 5 columns: month, rent, profit, fee_percent, fee_amount
     num_cols = 5
-    num_rows = num_months + 1  # Include TOTAL row
+    num_rows = 12  # Always clear for 12 months (no TOTAL row)
     
     # Calculate end column (A + 5 columns = E)
     end_col_num = ord(table_start_col) + num_cols - 1
@@ -365,18 +318,14 @@ def cleanup_template_before_populate(worksheet, invoice_config, num_months):
     end_row = table_start_row + num_rows - 1
     
     table_range = f"{table_start_col}{table_start_row}:{end_col}{end_row}"
-    empty_table_data = [[''] * num_cols for _ in range(num_rows)]
+    ranges_to_clear.append(table_range)
     
-    updates.append({
-        'range': table_range,
-        'values': empty_table_data
-    })
+    # Use batch_clear to clear content while preserving formatting
+    worksheet.batch_clear(ranges_to_clear)
     
-    # Execute batch update
-    worksheet.batch_update(updates)
-    
-    print(f"   → Cleared {len(cells_to_clear)} individual cells")
+    print(f"   → Cleared {len(ranges_to_clear) - 1} individual cells")
     print(f"   → Cleared table range {table_range} ({num_rows} rows x {num_cols} cols)")
+    print(f"   → Formatting preserved")
 
 def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoice_number, invoice_date, df, commission_total):
     """Populate invoice with data.
@@ -388,7 +337,7 @@ def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoic
         apartment_info: Apartment info from config
         invoice_number: Invoice number
         invoice_date: Invoice creation date (formatted string)
-        df: DataFrame with month data (includes TOTAL row)
+        df: DataFrame with month data (no TOTAL row)
         commission_total: Total commission amount
     """
     worksheet = spreadsheet.sheet1  # Assume first sheet
@@ -414,7 +363,7 @@ def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoic
     if 'client_id' in apartment_info and 'client_id' in mapping:
         worksheet.update(values=[[apartment_info['client_id']]], range_name=mapping['client_id'])
     
-    # Write table data (includes TOTAL row)
+    # Write table data (only month rows, no TOTAL row)
     table_start_row = mapping['table_start_row']
     table_start_col = mapping['table_start_col']
     
@@ -430,7 +379,6 @@ def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoic
     range_name = f"{table_start_col}{table_start_row}:{end_col}{end_row}"
     
     # Use value_input_option='USER_ENTERED' to let Sheets interpret the data types
-    # This prevents the "TOTAL" from appearing in A1
     worksheet.update(values=table_data, range_name=range_name, value_input_option='USER_ENTERED')
     
     # Write commission total separately (H36)
@@ -470,6 +418,7 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     
     apartment_info = invoice_config['apartments'][apartment]
     owner_email = invoice_config.get('owner_email')
+    template_id = invoice_config['template_sheet_id']
     
     if not owner_email or owner_email == 'YOUR_EMAIL@example.com':
         print_step("⚠️", "Warning: owner_email not configured in config/invoices.json")
@@ -497,33 +446,32 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
         # Small delay between months to avoid rate limits
         time.sleep(0.5)
     
-    # Create DataFrame (includes TOTAL row automatically)
+    # Create DataFrame (no TOTAL row)
     df, commission_total = create_invoice_dataframe(month_data_list)
     print_step("✅", "Data aggregated")
     print(f"   Commission Total: {commission_total:.2f}")
     
-    # Copy template
-    print_step("📋", "Copying invoice template...")
-    template_id = invoice_config['template_sheet_id']
-    new_invoice = copy_template_invoice(client, template_id, invoice_number, owner_email)
+    # Open the template spreadsheet
+    print_step("📝", "Opening invoice template...")
+    invoice_sheet = client.open_by_key(template_id)
     
-    # Clean template BEFORE populating (ensures blank slate)
-    print_step("🧹", "Cleaning template (clearing cells that will be written)...")
+    # Clean template (ensures blank slate, preserves formatting)
+    print_step("🧹", "Cleaning template (preserving formatting)...")
     try:
-        worksheet = new_invoice.sheet1
-        cleanup_template_before_populate(worksheet, invoice_config, len(months))
+        worksheet = invoice_sheet.sheet1
+        cleanup_template_before_populate(worksheet, invoice_config)
         print_step("✅", "Template cleaned")
     except Exception as e:
         print_step("⚠️", f"Could not clean template: {e}")
     
     # Populate invoice
     print_step("✏️", "Populating invoice...")
-    populate_invoice(client, new_invoice, invoice_config, apartment_info, invoice_number, invoice_date, df, commission_total)
+    populate_invoice(client, invoice_sheet, invoice_config, apartment_info, invoice_number, invoice_date, df, commission_total)
     
-    # Generate PDF export link (after populating, so it contains data)
+    # Generate PDF export link
     print_step("📄", "Generating PDF export link...")
-    pdf_link = generate_pdf_export_link(new_invoice.id)
-    print_step("✅", f"PDF link ready")
+    pdf_link = generate_pdf_export_link(invoice_sheet.id)
+    print_step("✅", "PDF export link ready")
     
     # Prepare email list (always include owner, plus any additional)
     emails_to_share = []
@@ -541,8 +489,8 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
         'year': year,
         'test_mode': test,
         'created_at': datetime.now().isoformat(),
-        'spreadsheet_id': new_invoice.id,
-        'spreadsheet_url': new_invoice.url,
+        'spreadsheet_id': invoice_sheet.id,
+        'spreadsheet_url': invoice_sheet.url,
         'pdf_export_link': pdf_link,
         'shared_with': emails_to_share,
         'commission_total': commission_total
@@ -552,13 +500,13 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     print_header("✅ INVOICE CREATED", "=")
     print(f"Invoice Number: {invoice_number}")
     print(f"Invoice Date: {invoice_date}")
-    print(f"\n📄 PDF Export Link (open to download):")
+    print(f"\n📄 PDF Export Link:")
     print(f"   {pdf_link}")
     print(f"\n🔗 View/Edit Spreadsheet:")
-    print(f"   {new_invoice.url}")
+    print(f"   {invoice_sheet.url}")
     if emails_to_share:
         print(f"\n📤 Accessible by: {', '.join(emails_to_share)}")
-    print(f"\nℹ️  Spreadsheet remains populated with invoice data")
+    print(f"\nℹ️  Click the PDF link above to download invoice as PDF")
     print()
     
     return invoice_number, pdf_link
