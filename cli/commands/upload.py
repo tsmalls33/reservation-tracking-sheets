@@ -136,7 +136,7 @@ def upload(csv_files, apartment, year, test, hard_replace):
     
     try:
         # Upload with real-time output
-        subprocess.run(cmd, check=True)
+        result = subprocess.run(cmd, check=True, capture_output=False, text=True)
         
         section_header("✅ SUCCESS")
         click.echo(f"Uploaded to: {apartment}_{year}{config_suffix}")
