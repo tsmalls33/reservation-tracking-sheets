@@ -260,22 +260,6 @@ def open():
         sys.exit(1)
 
 
-@cli.command()
-def source():
-    """Open the project root directory in Neovim (alias for 'open').
-    
-    Launches Neovim with the project root directory
-    (~/dev/reservation-tracking-sheets) as the working directory.
-    
-    \b
-    Example:
-      reservations source
-    """
-    # Call the open command
-    ctx = click.get_current_context()
-    ctx.invoke(open)
-
-
 @cli.group()
 def config():
     """Manage configuration files for apartments.
