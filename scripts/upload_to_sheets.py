@@ -241,7 +241,11 @@ def build_row_from_mapping(row_data, column_mapping, columns):
     return row_list
 
 def upload_reservations(client, config, spreadsheet_id, csv_file, hard_replace=False):
-    """Upload processed reservations using dynamic column mapping from config."""
+    """Upload processed reservations using dynamic column mapping from config.
+    
+    Returns:
+        str: URL to the Google Sheet
+    """
     
     print_header("📊 UPLOAD SUMMARY", "=")
     
@@ -265,6 +269,9 @@ def upload_reservations(client, config, spreadsheet_id, csv_file, hard_replace=F
     print_step("🔗", "Connecting to Google Sheets...")
     spreadsheet = client.open_by_key(spreadsheet_id)
     print_success(f"Connected: '{spreadsheet.title}'")
+    
+    # Build sheet URL
+    sheet_url = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}"
     
     # Get available tabs
     available_tabs = {ws.title.strip() for ws in spreadsheet.worksheets()}
@@ -355,6 +362,9 @@ def upload_reservations(client, config, spreadsheet_id, csv_file, hard_replace=F
     print_step("📊", f"Total uploaded: {total_uploaded} reservations")
     print_step("📅", f"Months updated: {len(target_tabs)}")
     print_step("🗂️", f"Spreadsheet: {spreadsheet.title}")
+    print_step("🔗", f"View at: {sheet_url}")
+    
+    return sheet_url
 
 def print_help():
     """Print help from USAGE.txt file."""
@@ -390,7 +400,7 @@ def main():
     config = load_config(args.apartment, args.year, args.test)
     client = authenticate_sheets()
     
-    upload_reservations(client, config, config['spreadsheet_id'], args.csv, args.hard_replace)
+    sheet_url = upload_reservations(client, config, config['spreadsheet_id'], args.csv, args.hard_replace)
 
 if __name__ == "__main__":
     main()
