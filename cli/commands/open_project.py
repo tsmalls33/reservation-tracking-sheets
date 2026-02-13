@@ -97,17 +97,3 @@ def open_cmd(apartment, year, test):
             sys.exit(1)
 
 
-@click.command('source')
-def source():
-    """Open the project root directory in Neovim (alias for 'open').
-    
-    Launches Neovim with the project root directory
-    (~/dev/reservation-tracking-sheets) as the working directory.
-    
-    \b
-    Example:
-      reservations source
-    """
-    # Call the open command without apartment option
-    ctx = click.get_current_context()
-    ctx.invoke(open_cmd, apartment=None, year=2026, test=False)
