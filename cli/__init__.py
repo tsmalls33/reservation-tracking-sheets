@@ -36,6 +36,7 @@ def cli(ctx):
       reservations upload bookings.csv -a downtown-loft
       reservations invoice create -a downtown-loft -m january,february
       reservations open -a downtown-loft
+      reservations docs
     
     \b
     Configuration:
@@ -44,7 +45,8 @@ def cli(ctx):
     
     \b
     Documentation:
-      See docs/ folder for detailed guides:
+      Run 'reservations docs' to view full documentation online.
+      Or see docs/ folder for detailed guides:
       • INSTALLATION.md - Setup and Google Cloud configuration
       • CONFIGURATION.md - Apartment config and column mappings
       • INVOICES.md - Invoice generation and management
@@ -58,13 +60,13 @@ def cli(ctx):
 
 def register_commands():
     """Register all command groups and commands."""
-    from .commands import config, invoice, upload, open_project
+    from .commands import config, invoice, upload, open_project, docs
     
     cli.add_command(config.config)
     cli.add_command(invoice.invoice)
     cli.add_command(upload.upload)
     cli.add_command(open_project.open_cmd)
-    cli.add_command(open_project.source)
+    cli.add_command(docs.docs)
 
 
 # Register commands on import
