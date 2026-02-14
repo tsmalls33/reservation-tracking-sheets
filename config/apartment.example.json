@@ -1,0 +1,166 @@
+{
+  "_comment_1": "Apartment Configuration Template",
+  "_comment_2": "This file defines how reservation data is mapped to Google Sheets",
+  "_comment_3": "Copy this to {apartment}_{year}.json (e.g., downtown-loft_2026.json)",
+
+  "spreadsheet_id": "YOUR_GOOGLE_SPREADSHEET_ID_HERE",
+  "_note_spreadsheet": "Find in URL: https://docs.google.com/spreadsheets/d/{THIS_IS_THE_ID}/edit",
+
+  "language": "en",
+  "_note_language": "Language code: 'en' for English, 'es' for Spanish. Affects month tab names.",
+
+  "tabs": {
+    "january_reservations": {
+      "tab_name": "January",
+      "_note_tab": "Name of the Google Sheets tab (use Spanish months if language=es: Enero, Febrero, etc.)",
+
+      "start_range": "B10",
+      "_note_range": "Cell where data starts (top-left corner of data table)",
+
+      "columns": [
+        "Guest Name",
+        "Check In",
+        "Check Out",
+        "Nights",
+        "Total Price"
+      ],
+      "_note_columns": "Column headers in your CSV (defines data structure)",
+
+      "column_mapping": {
+        "Guest Name": {
+          "csv_field": "Guest",
+          "sheet_col_offset": 0,
+          "_note": "Maps CSV 'Guest' field to first column (offset 0)"
+        },
+        "Check In": {
+          "csv_field": "Start Date",
+          "sheet_col_offset": 1,
+          "_note": "Maps CSV 'Start Date' to second column (offset 1)"
+        },
+        "Check Out": {
+          "csv_field": "End Date",
+          "sheet_col_offset": 2,
+          "_note": "Maps CSV 'End Date' to third column (offset 2)"
+        },
+        "Nights": {
+          "csv_field": "Nights",
+          "sheet_col_offset": 3,
+          "_note": "Maps CSV 'Nights' to fourth column (offset 3)"
+        },
+        "Total Price": {
+          "csv_fields": ["Price", "Commission"],
+          "operation": "sum",
+          "sheet_col_offset": 4,
+          "_note": "Calculated field: sums CSV 'Price' + 'Commission' into fifth column (offset 4)"
+        }
+      },
+      "_note_mapping": "Each key matches a column name. Use 'csv_field' for direct mapping or 'csv_fields' + 'operation' for calculations.",
+
+      "physical_columns": 5,
+      "_note_physical": "Total number of columns in this section (must match number of columns defined)"
+    },
+
+    "_example_costs_tab": {
+      "_comment": "Example of a costs/expenses tab configuration",
+      "tab_name": "January",
+      "start_range": "F10",
+      "columns": [
+        "Expense Name",
+        "Amount"
+      ],
+      "column_mapping": {
+        "Expense Name": {
+          "csv_field": "Description",
+          "sheet_col_offset": 0
+        },
+        "Amount": {
+          "csv_field": "Cost",
+          "sheet_col_offset": 1
+        }
+      },
+      "physical_columns": 2
+    },
+
+    "_example_skip_column": {
+      "_comment": "Example showing how to skip a column (leave it blank)",
+      "tab_name": "January",
+      "start_range": "B10",
+      "columns": [
+        "Guest Name",
+        "Check In",
+        "Check Out",
+        "Total Price"
+      ],
+      "column_mapping": {
+        "Guest Name": {
+          "csv_field": "Guest",
+          "sheet_col_offset": 0,
+          "skip_next": true,
+          "_note": "skip_next: true skips the next column (leaves it blank)"
+        },
+        "Check In": {
+          "csv_field": "Start Date",
+          "sheet_col_offset": 2,
+          "_note": "Offset 2 because we skipped column 1"
+        },
+        "Check Out": {
+          "csv_field": "End Date",
+          "sheet_col_offset": 3
+        },
+        "Total Price": {
+          "csv_field": "Price",
+          "sheet_col_offset": 4
+        }
+      },
+      "physical_columns": 5,
+      "_note": "Physical columns includes the skipped column"
+    },
+
+    "february_reservations": {
+      "_comment": "Repeat for each month. Copy january_reservations structure and change tab_name.",
+      "tab_name": "February",
+      "start_range": "B10",
+      "columns": [
+        "Guest Name",
+        "Check In",
+        "Check Out",
+        "Nights",
+        "Total Price"
+      ],
+      "column_mapping": {
+        "Guest Name": {
+          "csv_field": "Guest",
+          "sheet_col_offset": 0
+        },
+        "Check In": {
+          "csv_field": "Start Date",
+          "sheet_col_offset": 1
+        },
+        "Check Out": {
+          "csv_field": "End Date",
+          "sheet_col_offset": 2
+        },
+        "Nights": {
+          "csv_field": "Nights",
+          "sheet_col_offset": 3
+        },
+        "Total Price": {
+          "csv_fields": ["Price", "Commission"],
+          "operation": "sum",
+          "sheet_col_offset": 4
+        }
+      },
+      "physical_columns": 5
+    }
+  },
+
+  "_notes": {
+    "quick_start": "1. Copy this file to {apartment}_{year}.json | 2. Update spreadsheet_id | 3. Configure tabs for each month | 4. Run: reservations upload data.csv -a {apartment}",
+    "csv_field_names": "Must match exact column names in your CSV exports from Airbnb/Booking.com",
+    "sheet_col_offset": "0-indexed column position relative to start_range (0=first column, 1=second, etc.)",
+    "calculated_fields": "Use 'csv_fields' array + 'operation' to combine multiple CSV columns. Currently supports: 'sum'",
+    "skip_next": "Use skip_next: true to leave a blank column in the sheet (useful for formula columns)",
+    "physical_columns": "Total columns including skipped ones. Used to calculate clearing range.",
+    "all_months": "Define all 12 months if you want year-round tracking. Use English (January-December) or Spanish (Enero-Diciembre) based on language setting."
+  }
+}

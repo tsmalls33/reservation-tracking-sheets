@@ -1,1 +1,81 @@
-{\n  "template_sheet_id": "TEMPLATE_SHEET_ID",\n  "working_folder_id": "FOLDER_ID",\n  "output_folder": "invoices",\n  "owner_email": "your.email.here@email.com",\n  "apartments": {\n    "apt1": {\n      "invoice_code": "APT1",\n      "client_name": "OWNER_NAME_HERE",\n      "client_address": "YOUR_ADDRESS_HERE",\n      "client_zip_code": "YOUR_ZIP_CODE",\n      "client_city": "YOUR_CITY",\n      "client_id": "YOUR_ID_NUMBER",\n      "property_name": "APARTMENT NAME HERE"\n    },\n    "apt2": {\n      "invoice_code": "APT2",\n      "client_name": "OWNER_NAME_HERE",\n      "client_address": "YOUR_ADDRESS_HERE",\n      "client_zip_code": "YOUR_ZIP_CODE",\n      "client_city": "YOUR_CITY",\n      "client_id": "YOUR_ID_NUMBER",\n      "property_name": "APARTMENT NAME HERE"\n    }\n  },\n  "source_cells": {\n    "ganancia_mensual": "E3",\n    "comision_devomart": "H3",\n    "percentage": "J2",\n    "renta_mensual": "F6"\n  },\n  "invoice_mapping": {\n    "invoice_number": "F6",\n    "invoice_date": "F8",\n    "client_name": "B12",\n    "client_address": "B13",\n    "client_zip_code": "B14",\n    "client_city": "B15",\n    "client_id": "B16",\n    "property_name": "D13",\n    "table_start_row": 20,\n    "table_start_col": "B",\n    "commission_total_cell": "G33"\n  }\n}
+{
+  "_comment_1": "Invoice Configuration Template",
+  "_comment_2": "This file configures invoice generation for all apartments",
+  "_comment_3": "Copy this to invoices.json and customize with your values",
+
+  "template_sheet_id": "YOUR_TEMPLATE_SPREADSHEET_ID_HERE",
+  "_note_template": "ID of Google Sheets invoice template. Find in URL: /spreadsheets/d/{ID}/edit",
+
+  "working_folder_id": "YOUR_GOOGLE_DRIVE_FOLDER_ID_HERE",
+  "_note_folder": "Google Drive folder where generated invoices are stored",
+
+  "output_folder": "invoices",
+  "_note_output": "Local folder for invoice metadata (JSON files)",
+
+  "owner_email": "your.email@example.com",
+  "_note_email": "Your email - invoices will be shared with this address",
+
+  "apartments": {
+    "downtown-loft": {
+      "invoice_code": "DL",
+      "client_name": "Property Owner LLC",
+      "client_address": "123 Main Street",
+      "client_zip_code": "10001",
+      "client_city": "New York, NY",
+      "client_id": "TAX-123456",
+      "property_name": "Downtown Loft Apartments"
+    },
+    "beachside-villa": {
+      "invoice_code": "BV",
+      "client_name": "Villa Management Inc",
+      "client_address": "456 Ocean Drive",
+      "client_zip_code": "33139",
+      "client_city": "Miami Beach, FL",
+      "client_id": "TAX-789012",
+      "property_name": "Beachside Villa Resort"
+    }
+  },
+  "_note_apartments": "Add one entry per apartment. Keys must match config filenames (e.g., downtown-loft_2026.json)",
+
+  "source_cells": {
+    "ganancia_mensual": "E3",
+    "comision_devomart": "H3",
+    "percentage": "J2",
+    "renta_mensual": "F6"
+  },
+  "_note_source": "Cell references in month tabs where financial data is located",
+  "_source_fields": {
+    "ganancia_mensual": "Monthly profit/earnings cell",
+    "comision_devomart": "Commission amount cell",
+    "percentage": "Commission percentage cell (e.g., 15 for 15%)",
+    "renta_mensual": "Monthly rent/revenue cell"
+  },
+
+  "invoice_mapping": {
+    "invoice_number": "F6",
+    "invoice_date": "F8",
+    "client_name": "B12",
+    "client_address": "B13",
+    "client_zip_code": "B14",
+    "client_city": "B15",
+    "client_id": "B16",
+    "property_name": "D13",
+    "table_start_row": 20,
+    "table_start_col": "B",
+    "commission_total_cell": "G33"
+  },
+  "_note_mapping": "Cell references in invoice template where data should be written",
+  "_mapping_fields": {
+    "invoice_number": "Cell for invoice number (e.g., DL_0001)",
+    "invoice_date": "Cell for invoice date (DD/MM/YYYY)",
+    "client_name": "Cell for client/owner name",
+    "client_address": "Cell for client address",
+    "client_zip_code": "Cell for postal code",
+    "client_city": "Cell for city",
+    "client_id": "Cell for tax ID/ID number",
+    "property_name": "Cell for property/apartment name",
+    "table_start_row": "First row of monthly data table (numeric)",
+    "table_start_col": "First column of monthly data table (letter)",
+    "commission_total_cell": "Cell for total commission sum"
+  }
+}
