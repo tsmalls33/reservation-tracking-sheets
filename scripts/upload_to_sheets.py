@@ -15,7 +15,7 @@ import warnings
 warnings.filterwarnings('ignore', category=FutureWarning)
 warnings.filterwarnings('ignore', category=UserWarning)
 
-PROJECT_ROOT = Path("/Users/thomas/dev/reservation-tracking-sheets")
+PROJECT_ROOT = Path(__file__).parent.parent.absolute()
 
 # Month name translations
 MONTH_NAMES = {

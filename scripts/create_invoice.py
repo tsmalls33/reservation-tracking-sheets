@@ -14,7 +14,7 @@ from datetime import datetime
 import time
 from urllib.parse import urlencode
 
-PROJECT_ROOT = Path("/Users/thomas/dev/reservation-tracking-sheets")
+PROJECT_ROOT = Path(__file__).parent.parent.absolute()
 
 # Month name translations
 MONTH_NAMES = {

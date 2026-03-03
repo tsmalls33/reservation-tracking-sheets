@@ -217,3 +217,5 @@ config/*.json
 # But include example templates
 !config/invoices.example.json
 !config/apartment.example.json
+plans/*
+.claude/*
