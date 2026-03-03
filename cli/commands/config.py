@@ -54,8 +54,8 @@ def config_list():
                     
                     click.echo(f"  {badge} {lang_badge} {config_file.name}")
                     click.echo(f"     → Sheet: {sheet_id}...")
-            except:
-                warning(f"{config_file.name} (invalid JSON)")
+            except (json.JSONDecodeError, OSError) as e:
+                warning(f"{config_file.name} (invalid JSON: {e})")
     
     click.echo(f"\n📊 Total: {sum(len(v) for v in configs.values())} config(s) across {len(configs)} apartment(s)")
     click.echo()
@@ -97,9 +97,9 @@ def config_create():
                 language = data.get('language', 'en').upper()
                 lang_badge = click.style(f'[{language}]', fg='blue')
                 click.echo(f"  {idx}. {badge} {lang_badge} {config_file.name}")
-        except:
+        except (json.JSONDecodeError, OSError):
             click.echo(f"  {idx}. {config_file.name}")
-    
+
     # Get user choice
     click.echo()
     choice = click.prompt('Choose a template (number)', type=int)
@@ -204,9 +204,9 @@ def config_delete():
                 language = data.get('language', 'en').upper()
                 lang_badge = click.style(f'[{language}]', fg='blue')
                 click.echo(f"  {idx}. {badge} {lang_badge} {config_file.name}")
-        except:
+        except (json.JSONDecodeError, OSError):
             click.echo(f"  {idx}. {config_file.name}")
-    
+
     # Get user selection
     click.echo()
     click.echo("Enter config number(s) to delete:")

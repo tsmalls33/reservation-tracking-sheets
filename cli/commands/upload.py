@@ -88,20 +88,24 @@ def upload(csv_files, apartment, year, test, hard_replace):
                 
                 click.echo(f"\n🔄 Processing {click.style(platform.upper(), fg='cyan')}: {Path(csv_file).name}")
                 
-                # Process with real-time output
-                subprocess.run([
-                    sys.executable, str(script_path), 
+                # Process CSV (capture stderr for error reporting)
+                result = subprocess.run([
+                    sys.executable, str(script_path),
                     str(csv_file), str(processed)
-                ], check=True)
-                
+                ], check=True, capture_output=True, text=True)
+                if result.stdout:
+                    click.echo(result.stdout, nl=False)
+
                 processed_files.append(processed)
                 success("Processed")
-                
+
             except ValueError as e:
                 error(str(e))
                 sys.exit(1)
-            except subprocess.CalledProcessError:
+            except subprocess.CalledProcessError as e:
                 error(f"Processing failed for {csv_file}")
+                if e.stderr:
+                    click.echo(e.stderr, err=True)
                 sys.exit(1)
         
         # Merge if multiple files
@@ -111,10 +115,18 @@ def upload(csv_files, apartment, year, test, hard_replace):
             merged = temp_dir / f"{apartment}_{year}_merged.csv"
             
             click.echo(f"🔀 Merging {click.style(str(len(processed_files)), fg='cyan')} files...")
-            subprocess.run([
-                sys.executable, str(merge_script),
-                *[str(f) for f in processed_files], str(merged)
-            ], check=True)
+            try:
+                merge_result = subprocess.run([
+                    sys.executable, str(merge_script),
+                    *[str(f) for f in processed_files], str(merged)
+                ], check=True, capture_output=True, text=True)
+                if merge_result.stdout:
+                    click.echo(merge_result.stdout, nl=False)
+            except subprocess.CalledProcessError as e:
+                error("Merge failed")
+                if e.stderr:
+                    click.echo(e.stderr, err=True)
+                sys.exit(1)
             final_csv = merged
             success("Merged")
         else:
@@ -139,15 +151,17 @@ def upload(csv_files, apartment, year, test, hard_replace):
         click.echo(f"📤 Target: {click.style(f'{apartment}_{year}{config_suffix}', fg='cyan')}")
         
         try:
-            # Upload with real-time output
-            subprocess.run(cmd, check=True, capture_output=False, text=True)
-            
+            # Upload with real-time stdout, capture stderr for error reporting
+            subprocess.run(cmd, check=True, stderr=subprocess.PIPE, text=True)
+
             section_header("✅ SUCCESS")
             click.echo(f"Uploaded to: {apartment}_{year}{config_suffix}")
             click.echo()
-            
-        except subprocess.CalledProcessError:
+
+        except subprocess.CalledProcessError as e:
             section_header("❌ UPLOAD FAILED")
+            if e.stderr:
+                click.echo(e.stderr, err=True)
             raise  # Re-raise to trigger cleanup in finally block
     
     finally:

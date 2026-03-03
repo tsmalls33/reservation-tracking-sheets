@@ -16,12 +16,31 @@ def process_airbnb_csv(input_file, output_file=None, cleaning_fee=25.0):
         DataFrame with processed data
     """
     # Read CSV
-    df = pd.read_csv(input_file)
-    
+    try:
+        df = pd.read_csv(input_file, encoding='utf-8')
+    except UnicodeDecodeError:
+        df = pd.read_csv(input_file, encoding='latin-1')
+    except FileNotFoundError:
+        print(f"✗ File not found: {input_file}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"✗ Error reading CSV: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    # Validate required columns exist
+    required_columns = ['N.º de adultos', 'N.º de niños', 'N.º de bebés',
+                        'Nombre de la persona', 'Fecha de inicio',
+                        'Fecha de finalización', 'N.º de noches', 'Ingresos']
+    missing = [col for col in required_columns if col not in df.columns]
+    if missing:
+        print(f"✗ Missing required columns: {', '.join(missing)}", file=sys.stderr)
+        print(f"  Available columns: {', '.join(df.columns)}", file=sys.stderr)
+        sys.exit(1)
+
     # Calculate total guests (adults + children + babies)
     df['total_guests'] = (
-        df['N.º de adultos'].fillna(0) + 
-        df['N.º de niños'].fillna(0) + 
+        df['N.º de adultos'].fillna(0) +
+        df['N.º de niños'].fillna(0) +
         df['N.º de bebés'].fillna(0)
     ).astype(int)
     
