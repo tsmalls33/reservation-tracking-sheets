@@ -1,5 +1,6 @@
 """Configuration management commands."""
 
+import sys
 import json
 import click
 from .. import CONFIG_DIR
@@ -30,8 +31,8 @@ def config_list():
     if not configs:
         error("No configuration files found in config/")
         click.echo(f"\nCreate a config with: {click.style('reservations config create', fg='cyan')}")
-        return
-    
+        sys.exit(1)
+
     section_header("CONFIGURATION FILES")
     
     for apartment in sorted(configs.keys()):
@@ -76,8 +77,8 @@ def config_create():
     if not configs:
         error("No existing configs to use as template!")
         click.echo("\nCreate your first config manually in config/ directory.")
-        return
-    
+        sys.exit(1)
+
     section_header("CREATE NEW CONFIG")
     click.echo("\n📋 Available templates:\n")
     
@@ -106,8 +107,8 @@ def config_create():
     
     if choice < 1 or choice > len(all_configs):
         error("Invalid choice")
-        return
-    
+        sys.exit(1)
+
     template_file = all_configs[choice - 1]
     click.echo(f"\n✅ Using template: {click.style(template_file.name, fg='cyan')}")
     
@@ -182,8 +183,8 @@ def config_delete():
     
     if not configs:
         error("No configuration files found in config/")
-        return
-    
+        sys.exit(1)
+
     # Build flat list of all configs
     all_configs = []
     for apartment in sorted(configs.keys()):
@@ -220,13 +221,13 @@ def config_delete():
         indices = [int(x.strip()) for x in selection.split(',')]
     except ValueError:
         error("Invalid input. Use numbers separated by commas.")
-        return
+        sys.exit(1)
     
     # Validate indices
     invalid = [i for i in indices if i < 1 or i > len(all_configs)]
     if invalid:
         error(f"Invalid selection(s): {', '.join(map(str, invalid))}")
-        return
+        sys.exit(1)
     
     # Get files to delete
     files_to_delete = [all_configs[i - 1] for i in indices]

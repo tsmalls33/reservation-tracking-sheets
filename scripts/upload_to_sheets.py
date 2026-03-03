@@ -298,7 +298,8 @@ def upload_reservations(client, config, spreadsheet_id, csv_file, hard_replace=F
             ws = get_worksheet_fuzzy(spreadsheet, tab_name)
             # Use physical_columns from config for dynamic clearing
             num_cols = tab_config.get('physical_columns', len(tab_config['columns']))
-            clear_exact_range(ws, tab_config['start_range'], num_cols, 15)
+            num_rows = tab_config.get('clear_rows', 15)
+            clear_exact_range(ws, tab_config['start_range'], num_cols, num_rows)
             print_info(f"{tab_name}: Cleared {num_cols} columns", indent=1)
             cleared_count += 1
         except gspread.exceptions.WorksheetNotFound:
