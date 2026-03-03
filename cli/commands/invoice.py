@@ -5,7 +5,7 @@ import json
 import subprocess
 import click
 from .. import PROJECT_ROOT, CONFIG_DIR
-from ..utils.config import list_config_files
+from ..utils.config import list_config_files, validate_apartment_config
 from ..utils.months import parse_months
 from ..utils.display import error, success, warning, section_header
 
@@ -35,7 +35,7 @@ def invoice_config():
     
     # Load existing invoice config
     if invoices_config_path.exists():
-        with open(invoices_config_path, 'r') as f:
+        with open(invoices_config_path, 'r', encoding='utf-8') as f:
             invoices_config = json.load(f)
     else:
         error("No invoices.json found in config/")
@@ -188,7 +188,7 @@ def invoice_config():
     invoices_config["apartments"][apartment_name] = new_config
     
     # Save to file
-    with open(invoices_config_path, 'w') as f:
+    with open(invoices_config_path, 'w', encoding='utf-8') as f:
         json.dump(invoices_config, f, indent=2)
     
     # Show summary
@@ -254,9 +254,12 @@ def invoice_create(apartment, months, year, email, test):
       reservations invoice create -a mediona -m q1 -y 2025 -e your@email.com
     """
     try:
+        # Validate apartment config exists before doing any work
+        validate_apartment_config(CONFIG_DIR, apartment, year, test)
+
         # Parse months
         month_list = parse_months(months)
-        
+
         mode_label = click.style('[TEST]', fg='yellow') if test else click.style('[PROD]', fg='green')
         click.echo(f"\n{mode_label} Creating invoice...")
         click.echo(f"📅 Months: {', '.join([m.capitalize() for m in month_list])}")
@@ -277,7 +280,10 @@ def invoice_create(apartment, months, year, email, test):
             cmd.extend(['--email', email])
         
         subprocess.run(cmd, check=True)
-        
+
+    except click.BadParameter as e:
+        error(str(e))
+        sys.exit(1)
     except ValueError as e:
         error(str(e))
         sys.exit(1)
@@ -309,7 +315,7 @@ def invoice_list(apartment):
         if apartment_dir.exists():
             for invoice_file in apartment_dir.glob('*.json'):
                 try:
-                    with open(invoice_file, 'r') as f:
+                    with open(invoice_file, 'r', encoding='utf-8') as f:
                         data = json.load(f)
                         data['apartment'] = apartment
                         all_invoices.append(data)
@@ -321,7 +327,7 @@ def invoice_list(apartment):
             if apartment_dir.is_dir():
                 for invoice_file in apartment_dir.glob('*.json'):
                     try:
-                        with open(invoice_file, 'r') as f:
+                        with open(invoice_file, 'r', encoding='utf-8') as f:
                             data = json.load(f)
                             all_invoices.append(data)
                     except:

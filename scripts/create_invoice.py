@@ -160,13 +160,13 @@ def load_apartment_config(apartment, year, test=False):
     """
     suffix = '_test' if test else ''
     config_path = PROJECT_ROOT / f"config/{apartment}_{year}{suffix}.json"
-    with open(config_path, 'r') as f:
+    with open(config_path, 'r', encoding='utf-8') as f:
         return json.load(f)
 
 def load_invoice_config():
     """Load invoice configuration."""
     config_path = PROJECT_ROOT / "config/invoices.json"
-    with open(config_path, 'r') as f:
+    with open(config_path, 'r', encoding='utf-8') as f:
         return json.load(f)
 
 def get_month_tab_name(month_key, language='es'):
@@ -403,7 +403,7 @@ def save_invoice_metadata(apartment, invoice_number, invoice_data):
     invoice_dir.mkdir(parents=True, exist_ok=True)
     
     metadata_file = invoice_dir / f"{invoice_number}.json"
-    with open(metadata_file, 'w') as f:
+    with open(metadata_file, 'w', encoding='utf-8') as f:
         json.dump(invoice_data, f, indent=2)
 
 def create_invoice(apartment, months, year, additional_emails=None, test=False):
