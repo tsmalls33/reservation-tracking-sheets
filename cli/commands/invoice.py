@@ -3,6 +3,7 @@
 import sys
 import json
 import subprocess
+from datetime import datetime
 import click
 from .. import PROJECT_ROOT, CONFIG_DIR
 from ..utils.config import list_config_files
@@ -216,7 +217,7 @@ def invoice_config():
 @click.option('--apartment', '-a', required=True, help='Apartment name')
 @click.option('--months', '-m', required=True, 
               help='Months (jan,feb or q1,q2 or all)')
-@click.option('--year', '-y', type=int, default=2026, help='Year (default: 2026)')
+@click.option('--year', '-y', type=int, default=datetime.now().year, help='Year (default: current year)')
 @click.option('--email', '-e', help='Email to share invoice with')
 @click.option('--test', is_flag=True,
               help='Use test reservation config and TEST_ invoice numbering')
