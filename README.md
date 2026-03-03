@@ -155,6 +155,32 @@ reservations open
 reservations open -a downtown-loft
 ```
 
+## ⌨️ Shell Completion (Optional)
+
+Enable tab-completion for apartment names, months, and years. Add **one line** to your shell profile:
+
+**Bash** (`~/.bashrc`):
+```bash
+eval "$(_RESERVATIONS_COMPLETE=bash_source reservations)"
+```
+
+**Zsh** (`~/.zshrc`):
+```bash
+eval "$(_RESERVATIONS_COMPLETE=zsh_source reservations)"
+```
+
+**Fish** (`~/.config/fish/config.fish`):
+```fish
+_RESERVATIONS_COMPLETE=fish_source reservations | source
+```
+
+Then restart your shell or `source` the file. After that:
+```
+reservations upload data.csv -a <TAB>       → duplex  mediona  sant-domenec ...
+reservations invoice create -m <TAB>        → jan  feb  ... q1  q2  ... all
+reservations open -y <TAB>                  → 2025  2026
+```
+
 ## 🏗️ Project Structure
 
 ```

@@ -57,6 +57,7 @@ def cli(ctx):
       Enable tab-completion (add to your shell profile):
         bash: eval "$(_RESERVATIONS_COMPLETE=bash_source reservations)"
         zsh:  eval "$(_RESERVATIONS_COMPLETE=zsh_source reservations)"
+        fish: _RESERVATIONS_COMPLETE=fish_source reservations | source
     """
     # Ensure context object exists
     ctx.ensure_object(dict)
