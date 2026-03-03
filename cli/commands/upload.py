@@ -7,14 +7,17 @@ import click
 from pathlib import Path
 from .. import PROJECT_ROOT
 from ..utils.platform import detect_platform
+from ..utils.completion import complete_apartment, complete_year
 from ..utils.display import error, success, section_header, info
 
 
 @click.command()
 @click.argument('csv_files', nargs=-1, type=click.Path(exists=True), required=True)
-@click.option('--apartment', '-a', required=True, 
+@click.option('--apartment', '-a', required=True,
+              shell_complete=complete_apartment,
               help='Apartment name (matches config file: {apartment}_{year}.json)')
 @click.option('--year', '-y', type=int, default=2026,
+              shell_complete=complete_year,
               help='Year for config file (default: 2026)')
 @click.option('--test', is_flag=True,
               help='Use test configuration ({apartment}_{year}_test.json)')
