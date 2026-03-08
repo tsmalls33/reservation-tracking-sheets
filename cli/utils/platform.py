@@ -19,13 +19,13 @@ def detect_platform(filename: str) -> str:
     fn_lower = Path(filename).name.lower()
     
     # Check filename patterns
-    if any(x in fn_lower for x in ['airbnb', 'confirmación', 'hm']):
+    if any(x in fn_lower for x in ['airbnb', 'confirmación']):
         return 'airbnb'
     
     # Booking.com patterns:
     # - booking, reservation, invoice keywords
     # - Check-in YYYY-MM-DD to YYYY-MM-DD.xls pattern
-    if any(x in fn_lower for x in ['booking', 'reservation', 'invoice']):
+    if any(x in fn_lower for x in ['booking', 'invoice']):
         return 'booking'
     
     # Match: Check-in 2025-10-01 to 2025-12-31.xls
@@ -35,7 +35,7 @@ def detect_platform(filename: str) -> str:
     # Quick content check if filename doesn't match
     try:
         content = Path(filename).read_text(errors='ignore')[:1000].lower()
-        if any(x in content for x in ['airbnb', 'confirmación', 'hm']):
+        if any(x in content for x in ['airbnb', 'código de confirmación', 'confirmación', 'confirmation code']):
             return 'airbnb'
         if any(x in content for x in ['booking', 'reservation number', 'invoice number']):
             return 'booking'

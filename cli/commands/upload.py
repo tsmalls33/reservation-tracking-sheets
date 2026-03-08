@@ -5,22 +5,28 @@ import subprocess
 import shutil
 import click
 from pathlib import Path
-from .. import PROJECT_ROOT
+from .. import PROJECT_ROOT, CONFIG_DIR
 from ..utils.platform import detect_platform
+from ..utils.config import validate_apartment_config
+from ..utils.completion import complete_apartment, complete_year
 from ..utils.display import error, success, section_header, info
 
 
 @click.command()
 @click.argument('csv_files', nargs=-1, type=click.Path(exists=True), required=True)
-@click.option('--apartment', '-a', required=True, 
+@click.option('--apartment', '-a', required=True,
+              shell_complete=complete_apartment,
               help='Apartment name (matches config file: {apartment}_{year}.json)')
 @click.option('--year', '-y', type=int, default=2026,
+              shell_complete=complete_year,
               help='Year for config file (default: 2026)')
 @click.option('--test', is_flag=True,
               help='Use test configuration ({apartment}_{year}_test.json)')
 @click.option('--hard-replace', '-H', is_flag=True,
               help='Clear ALL month tabs (default: only clear detected months)')
-def upload(csv_files, apartment, year, test, hard_replace):
+@click.option('--keep-source', is_flag=True,
+              help='Keep original CSV files after upload (default: deletes them)')
+def upload(csv_files, apartment, year, test, hard_replace, keep_source):
     """Process and upload reservation CSVs to Google Sheets.
     
     Automatically detects platform (Airbnb/Booking.com), processes CSVs,
@@ -70,7 +76,14 @@ def upload(csv_files, apartment, year, test, hard_replace):
     if not csv_files:
         error("Provide at least one CSV file")
         sys.exit(1)
-    
+
+    # Validate apartment config exists before doing any processing
+    try:
+        validate_apartment_config(CONFIG_DIR, apartment, year, test)
+    except click.BadParameter as e:
+        error(str(e))
+        sys.exit(1)
+
     # Create temp directory
     temp_dir = PROJECT_ROOT / "data" / "temp"
     temp_dir.mkdir(parents=True, exist_ok=True)
@@ -107,13 +120,13 @@ def upload(csv_files, apartment, year, test, hard_replace):
                 if e.stderr:
                     click.echo(e.stderr, err=True)
                 sys.exit(1)
-        
+
         # Merge if multiple files
         if len(processed_files) > 1:
             click.echo("\n" + "-"*70)
             merge_script = PROJECT_ROOT / "scripts/merge_data.py"
             merged = temp_dir / f"{apartment}_{year}_merged.csv"
-            
+
             click.echo(f"🔀 Merging {click.style(str(len(processed_files)), fg='cyan')} files...")
             try:
                 merge_result = subprocess.run([

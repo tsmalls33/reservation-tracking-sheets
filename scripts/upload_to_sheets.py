@@ -96,7 +96,7 @@ def load_config(apartment_name, year, test_mode=False):
     print_step("🔍", f"Looking for config: {apartment_name}_{year}{suffix}.json")
     
     if Path(config_path).exists():
-        with open(config_path, 'r') as f:
+        with open(config_path, 'r', encoding='utf-8') as f:
             config = json.load(f)
         print_success(f"Config loaded")
         print_info(f"Spreadsheet: {config['spreadsheet_id'][:20]}...")

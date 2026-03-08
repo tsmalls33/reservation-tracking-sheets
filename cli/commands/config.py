@@ -44,14 +44,14 @@ def config_list():
             
             # Try to read language and spreadsheet ID
             try:
-                with open(config_file, 'r') as f:
+                with open(config_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     sheet_id = data.get('spreadsheet_id', 'N/A')[:30]
                     language = data.get('language', 'en').upper()
-                    
+
                     badge = click.style('[TEST]', fg='yellow') if is_test else click.style('[PROD]', fg='green')
                     lang_badge = click.style(f'[{language}]', fg='blue')
-                    
+
                     click.echo(f"  {badge} {lang_badge} {config_file.name}")
                     click.echo(f"     → Sheet: {sheet_id}...")
             except (json.JSONDecodeError, OSError) as e:
@@ -92,7 +92,7 @@ def config_create():
         badge = click.style('[TEST]', fg='yellow') if is_test else click.style('[PROD]', fg='green')
         
         try:
-            with open(config_file, 'r') as f:
+            with open(config_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 language = data.get('language', 'en').upper()
                 lang_badge = click.style(f'[{language}]', fg='blue')
@@ -112,7 +112,7 @@ def config_create():
     click.echo(f"\n✅ Using template: {click.style(template_file.name, fg='cyan')}")
     
     # Load template
-    with open(template_file, 'r') as f:
+    with open(template_file, 'r', encoding='utf-8') as f:
         template_data = json.load(f)
     
     # Get new config details
@@ -156,7 +156,7 @@ def config_create():
             return
     
     # Save new config
-    with open(new_filepath, 'w') as f:
+    with open(new_filepath, 'w', encoding='utf-8') as f:
         json.dump(new_config, f, indent=2)
     
     section_header("✅ CONFIG CREATED")
@@ -199,7 +199,7 @@ def config_delete():
         badge = click.style('[TEST]', fg='yellow') if is_test else click.style('[PROD]', fg='green')
         
         try:
-            with open(config_file, 'r') as f:
+            with open(config_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 language = data.get('language', 'en').upper()
                 lang_badge = click.style(f'[{language}]', fg='blue')
