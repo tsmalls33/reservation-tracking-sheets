@@ -23,7 +23,9 @@ from ..utils.display import error, success, section_header, info
               help='Use test configuration ({apartment}_{year}_test.json)')
 @click.option('--hard-replace', '-H', is_flag=True,
               help='Clear ALL month tabs (default: only clear detected months)')
-def upload(csv_files, apartment, year, test, hard_replace):
+@click.option('--keep-source', is_flag=True,
+              help='Keep original CSV files after upload (default: deletes them)')
+def upload(csv_files, apartment, year, test, hard_replace, keep_source):
     """Process and upload reservation CSVs to Google Sheets.
     
     Automatically detects platform (Airbnb/Booking.com), processes CSVs,
@@ -148,7 +150,12 @@ def upload(csv_files, apartment, year, test, hard_replace):
             section_header("✅ SUCCESS")
             click.echo(f"Uploaded to: {apartment}_{year}{config_suffix}")
             click.echo()
-            
+
+            if not keep_source:
+                for csv_file in csv_files:
+                    Path(csv_file).unlink()
+                info("🗑️  Deleted original CSV files")
+
         except subprocess.CalledProcessError:
             section_header("❌ UPLOAD FAILED")
             raise  # Re-raise to trigger cleanup in finally block
