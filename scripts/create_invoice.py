@@ -527,6 +527,13 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
         emails_to_share.extend(additional_emails)
     
     # Save metadata
+    owner_info = {
+        'client_name': apartment_info.get('client_name', ''),
+        'client_address': apartment_info.get('client_address', ''),
+        'client_zip_code': apartment_info.get('client_zip_code', ''),
+        'client_city': apartment_info.get('client_city', ''),
+        'client_id': apartment_info.get('client_id', ''),
+    }
     metadata = {
         'invoice_number': invoice_number,
         'invoice_date': invoice_date,
@@ -536,10 +543,9 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
         'test_mode': test,
         'created_at': datetime.now().isoformat(),
         'spreadsheet_id': invoice_sheet.id,
-        'spreadsheet_url': invoice_sheet.url,
-        'pdf_export_link': pdf_link,
         'shared_with': emails_to_share,
-        'commission_total': commission_total
+        'commission_total': commission_total,
+        'owner_info': owner_info
     }
     save_invoice_metadata(apartment, invoice_number, metadata)
     
