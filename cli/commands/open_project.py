@@ -6,12 +6,17 @@ import json
 import click
 from pathlib import Path
 from .. import PROJECT_ROOT, CONFIG_DIR
+from ..utils.completion import complete_apartment, complete_year
 from ..utils.display import error, success, info
 
 
 @click.command('open')
-@click.option('--apartment', '-a', help='Open Google Sheet for apartment (e.g., mediona, sant-domenec)')
-@click.option('--year', '-y', type=int, default=2026, help='Year for apartment config (default: 2026)')
+@click.option('--apartment', '-a',
+              shell_complete=complete_apartment,
+              help='Open Google Sheet for apartment (e.g., mediona, sant-domenec)')
+@click.option('--year', '-y', type=int, default=2026,
+              shell_complete=complete_year,
+              help='Year for apartment config (default: 2026)')
 @click.option('--test', is_flag=True, help='Use test configuration')
 def open_cmd(apartment, year, test):
     """Open the project in Neovim or view apartment Google Sheet.
