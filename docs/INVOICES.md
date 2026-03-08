@@ -214,12 +214,33 @@ Metadata saved to `invoices/{apartment}/{invoice_number}.json`:
   "test_mode": false,
   "created_at": "2026-02-15T10:30:00",
   "spreadsheet_id": "1ABC...XYZ",
-  "spreadsheet_url": "https://docs.google.com/spreadsheets/d/.../edit",
-  "pdf_export_link": "https://docs.google.com/spreadsheets/d/.../export?format=pdf",
   "shared_with": ["your.email@example.com", "client@example.com"],
-  "commission_total": 2475.50
+  "commission_total": 2475.50,
+  "owner_info": {
+    "invoice_code": "DL",
+    "property_name": "Downtown Loft",
+    "client_name": "Property Owner LLC",
+    "client_address": "123 Main Street",
+    "client_zip_code": "10001",
+    "client_city": "New York, NY",
+    "client_id": "TAX-12345"
+  }
 }
 ```
+
+> **⚠️ Important: Invoice Links Are Temporary**
+> 
+> The PDF export link and Google Sheet link displayed after invoice creation are **temporary**:
+> - The PDF link is generated on-the-fly each time and **will be overwritten** when the next invoice is created
+> - The spreadsheet link is a one-time copy of the template - new invoices don't overwrite previous ones, but the links stored in metadata become stale
+> - **Download the PDF immediately** after creating an invoice if you need to keep it
+> 
+> This is a limitation of the Google Sheets API - the service account cannot create new files in your Google Drive. Each invoice is created as a copy of the template, but the PDF must be exported at the moment of creation.
+> 
+> **Future improvement ideas:**
+> - Save PDF to local filesystem automatically
+> - Upload PDFs to a dedicated Google Drive folder
+> - Create permanent Google Drive links
 
 ## Invoice Management
 
