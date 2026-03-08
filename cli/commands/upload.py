@@ -185,6 +185,13 @@ def upload(csv_files, apartment, year, test, hard_replace, keep_source):
             click.echo(f"💡 View sheet: reservations open -a {apartment}")
             click.echo()
 
+            if not keep_source:
+                for csv_file in csv_files:
+                    Path(csv_file).unlink()
+                info("🗑️  Deleted original CSV files")
+            else:
+                info("📁 Source CSV files kept (--keep-source)")
+
         except subprocess.CalledProcessError as e:
             section_header("❌ UPLOAD FAILED")
             if e.stderr:
