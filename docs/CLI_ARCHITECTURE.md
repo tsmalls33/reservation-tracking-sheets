@@ -22,7 +22,8 @@ reservation-tracking-sheets/
 │   │   ├── invoice.py           # Invoice commands
 │   │   ├── config.py            # Config management
 │   │   ├── open_project.py      # Open/view commands
-│   │   └── docs.py              # Documentation command
+│   │   ├── docs.py              # Documentation command
+│   │   └── share.py             # Service account email display
 │   └── utils/
 │       ├── display.py           # Output formatting
 │       ├── platform.py          # Platform detection
@@ -44,7 +45,7 @@ reservation-tracking-sheets/
 
 ```python
 import click
-from .commands import upload, invoice, config, open_project, docs
+from .commands import upload, invoice, config, open_project, docs, share
 
 @click.group()
 @click.version_option(version='2.0.0')
@@ -58,6 +59,7 @@ cli.add_command(invoice.invoice)
 cli.add_command(config.config)
 cli.add_command(open_project.open_cmd)
 cli.add_command(docs.docs)
+cli.add_command(share.share)
 ```
 
 ### Command Modules

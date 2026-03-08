@@ -36,6 +36,7 @@ def cli(ctx, verbose):
     Quick Start:
       reservations upload bookings.csv -a downtown-loft
       reservations invoice create -a downtown-loft -m january,february
+      reservations share
       reservations open -a downtown-loft
       reservations docs
 
@@ -69,13 +70,14 @@ def cli(ctx, verbose):
 
 def register_commands():
     """Register all command groups and commands."""
-    from .commands import config, invoice, upload, open_project, docs
+    from .commands import config, invoice, upload, open_project, docs, share
     
     cli.add_command(config.config)
     cli.add_command(invoice.invoice)
     cli.add_command(upload.upload)
     cli.add_command(open_project.open_cmd)
     cli.add_command(docs.docs)
+    cli.add_command(share.share)
 
 
 # Register commands on import
