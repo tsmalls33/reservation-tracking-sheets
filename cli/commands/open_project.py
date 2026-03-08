@@ -61,7 +61,7 @@ def open_cmd(apartment, year, test):
             sys.exit(1)
         
         try:
-            with open(config_file, 'r') as f:
+            with open(config_file, 'r', encoding='utf-8') as f:
                 config = json.load(f)
             
             spreadsheet_id = config.get('spreadsheet_id')

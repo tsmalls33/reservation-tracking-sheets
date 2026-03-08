@@ -5,8 +5,9 @@ import subprocess
 import shutil
 import click
 from pathlib import Path
-from .. import PROJECT_ROOT
+from .. import PROJECT_ROOT, CONFIG_DIR
 from ..utils.platform import detect_platform
+from ..utils.config import validate_apartment_config
 from ..utils.completion import complete_apartment, complete_year
 from ..utils.display import error, success, section_header, info
 
@@ -75,7 +76,14 @@ def upload(csv_files, apartment, year, test, hard_replace, keep_source):
     if not csv_files:
         error("Provide at least one CSV file")
         sys.exit(1)
-    
+
+    # Validate apartment config exists before doing any processing
+    try:
+        validate_apartment_config(CONFIG_DIR, apartment, year, test)
+    except click.BadParameter as e:
+        error(str(e))
+        sys.exit(1)
+
     # Create temp directory
     temp_dir = PROJECT_ROOT / "data" / "temp"
     temp_dir.mkdir(parents=True, exist_ok=True)
@@ -95,26 +103,26 @@ def upload(csv_files, apartment, year, test, hard_replace, keep_source):
                 
                 # Process with real-time output
                 subprocess.run([
-                    sys.executable, str(script_path), 
+                    sys.executable, str(script_path),
                     str(csv_file), str(processed)
                 ], check=True)
-                
+
                 processed_files.append(processed)
                 success("Processed")
-                
+
             except ValueError as e:
                 error(str(e))
                 sys.exit(1)
             except subprocess.CalledProcessError:
                 error(f"Processing failed for {csv_file}")
                 sys.exit(1)
-        
+
         # Merge if multiple files
         if len(processed_files) > 1:
             click.echo("\n" + "-"*70)
             merge_script = PROJECT_ROOT / "scripts/merge_data.py"
             merged = temp_dir / f"{apartment}_{year}_merged.csv"
-            
+
             click.echo(f"🔀 Merging {click.style(str(len(processed_files)), fg='cyan')} files...")
             subprocess.run([
                 sys.executable, str(merge_script),
@@ -146,7 +154,7 @@ def upload(csv_files, apartment, year, test, hard_replace, keep_source):
         try:
             # Upload with real-time output
             subprocess.run(cmd, check=True, capture_output=False, text=True)
-            
+
             section_header("✅ SUCCESS")
             click.echo(f"Uploaded to: {apartment}_{year}{config_suffix}")
             click.echo()
