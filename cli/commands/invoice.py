@@ -40,7 +40,7 @@ def invoice_config():
     else:
         error("No invoices.json found in config/")
         click.echo("Create the base config file first with template_sheet_id, etc.")
-        return
+        sys.exit(1)
     
     # Get list of apartments from reservation configs
     reservation_configs = list_config_files(CONFIG_DIR)
@@ -79,7 +79,7 @@ def invoice_config():
     
     if selection < 0 or selection > len(all_apartments):
         error("Invalid selection")
-        return
+        sys.exit(1)
     
     # Determine mode
     is_new = selection == 0
@@ -298,7 +298,7 @@ def invoice_list(apartment):
     
     if not invoices_dir.exists():
         error("No invoices directory found")
-        return
+        sys.exit(1)
     
     # Collect all invoices
     all_invoices = []

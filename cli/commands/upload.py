@@ -144,6 +144,7 @@ def upload(csv_files, apartment, year, test, hard_replace):
             
             section_header("✅ SUCCESS")
             click.echo(f"Uploaded to: {apartment}_{year}{config_suffix}")
+            click.echo(f"💡 View sheet: reservations open -a {apartment}")
             click.echo()
             
         except subprocess.CalledProcessError:

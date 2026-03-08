@@ -12,14 +12,15 @@ __version__ = "2.0.0"
 
 @click.group()
 @click.version_option(__version__)
+@click.option('--verbose', '-v', is_flag=True, default=False, help='Enable verbose output.')
 @click.pass_context
-def cli(ctx):
+def cli(ctx, verbose):
     """Reservation Tracking System - Automate Airbnb/Booking.com to Google Sheets.
-    
+
     Intelligent CSV processing and upload tool for vacation rental managers.
     Automatically detects platforms, standardizes data, and uploads to Google Sheets
     with configurable column mappings.
-    
+
     \b
     Features:
     • Auto-detects Airbnb and Booking.com formats
@@ -30,19 +31,19 @@ def cli(ctx):
     • Smart clearing (only modified months)
     • Invoice generation with PDF export
     • Auto-cleanup temporary files
-    
+
     \b
     Quick Start:
       reservations upload bookings.csv -a downtown-loft
       reservations invoice create -a downtown-loft -m january,february
       reservations open -a downtown-loft
       reservations docs
-    
+
     \b
     Configuration:
       Configs: config/{apartment}_{year}.json
       Each defines spreadsheet ID, tabs, columns, and mappings.
-    
+
     \b
     Documentation:
       Run 'reservations docs' to view full documentation online.
@@ -56,6 +57,7 @@ def cli(ctx):
     ctx.ensure_object(dict)
     ctx.obj['project_root'] = PROJECT_ROOT
     ctx.obj['config_dir'] = CONFIG_DIR
+    ctx.obj['verbose'] = verbose
 
 
 def register_commands():
