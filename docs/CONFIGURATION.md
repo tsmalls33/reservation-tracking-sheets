@@ -31,13 +31,14 @@ Test configs:
 ### Using CLI (Recommended)
 
 ```bash
-reservations config create -a downtown-loft -y 2026
+reservations config create
 ```
 
-Creates template with:
-- Month tabs (January–December)
-- Default column mappings
-- Common settings
+Interactive wizard that:
+- Prompts you to select a template config
+- Asks for apartment name and year
+- Gets Google Sheet ID
+- Sets language (auto-translates tab names)
 
 ### Manual Creation
 
@@ -215,11 +216,11 @@ reservations upload data.csv -a downtown-loft -y 2025
 
 ### Test Configurations
 
-Development/testing:
+Development/testing - create a separate test config that points to a different spreadsheet:
 
 ```bash
-# Create test config
-reservations config create -a downtown-loft -y 2026 --test
+# Run config create and select "Yes" when asked to create as test config
+reservations config create
 
 # Use test config
 reservations upload data.csv -a downtown-loft --test
@@ -265,10 +266,10 @@ beachside-villa:
 ### Delete Configs
 
 ```bash
-reservations config delete downtown-loft_2025 downtown-loft_2024
+reservations config delete
 ```
 
-Prompts for confirmation before deleting.
+Interactive - shows numbered list and prompts for selection.
 
 ## Validation
 

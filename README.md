@@ -48,8 +48,9 @@ pip install -e .
 
 3. **Configure Apartment**
    ```bash
-   reservations config create -a downtown-loft -y 2026
+   reservations config create
    ```
+   Follow the interactive prompts to create your apartment configuration.
 
 ### Basic Usage
 
@@ -70,6 +71,10 @@ reservations share
 reservations open -a downtown-loft
 ```
 
+## Global Options
+
+- `-v, --verbose` - Enable verbose output for debugging
+
 ## 📖 Documentation
 
 - **[Installation Guide](docs/INSTALLATION.md)** - Detailed setup instructions
@@ -83,14 +88,15 @@ reservations open -a downtown-loft
 ### Upload Reservations
 
 ```bash
-reservations upload [FILES...] -a APARTMENT [-y YEAR] [--test] [--hard-replace]
+reservations upload [FILES...] -a APARTMENT [-y YEAR] [-H] [--test] [--keep-source]
 ```
 
 **Options:**
 - `-a, --apartment` - Apartment name (required)
 - `-y, --year` - Year for config (default: 2026)
-- `--test` - Use test configuration
 - `-H, --hard-replace` - Clear all month tabs before upload
+- `--test` - Use test configuration
+- `--keep-source` - Keep original CSV files after upload (default: deletes them)
 
 **Examples:**
 ```bash
@@ -104,14 +110,17 @@ reservations upload airbnb.csv booking.csv -a downtown-loft
 reservations upload data.csv -a downtown-loft --test
 
 # Clear all months first
-reservations upload data.csv -a downtown-loft --hard-replace
+reservations upload data.csv -a downtown-loft -H
+
+# Keep original CSV files
+reservations upload data.csv -a downtown-loft --keep-source
 ```
 
 ### Invoice Management
 
 ```bash
 # Create invoice
-reservations invoice create -a APARTMENT -m MONTHS [-y YEAR] [--test]
+reservations invoice create -a APARTMENT -m MONTHS [-y YEAR] [--test] [-e EMAIL]
 
 # List invoices
 reservations invoice list -a APARTMENT
@@ -141,11 +150,11 @@ reservations invoice create -a downtown-loft -m all
 # List configurations
 reservations config list
 
-# Create new configuration
-reservations config create -a APARTMENT -y YEAR
+# Create new configuration (interactive)
+reservations config create
 
-# Delete configuration
-reservations config delete CONFIGS...
+# Delete configuration (interactive)
+reservations config delete
 ```
 
 ### Share
@@ -163,6 +172,9 @@ reservations open
 
 # View apartment's Google Sheet (displays clickable link)
 reservations open -a downtown-loft
+
+# View test sheet for specific year
+reservations open -a downtown-loft -y 2025 --test
 ```
 
 ## ⌨️ Shell Completion (Optional)

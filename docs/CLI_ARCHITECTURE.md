@@ -45,21 +45,39 @@ reservation-tracking-sheets/
 
 ```python
 import click
-from .commands import upload, invoice, config, open_project, docs, share
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).parent.parent.absolute()
+CONFIG_DIR = PROJECT_ROOT / "config"
+
+__version__ = "2.0.0"
 
 @click.group()
-@click.version_option(version='2.0.0')
-def cli():
-    """Reservation Tracking System."""
-    pass
+@click.version_option(__version__)
+@click.option('--verbose', '-v', is_flag=True, default=False, help='Enable verbose output.')
+@click.pass_context
+def cli(ctx, verbose):
+    """Reservation Tracking System - Automate Airbnb/Booking to Google Sheets."""
+    ctx.ensure_object(dict)
+    ctx.obj['project_root'] = PROJECT_ROOT
+    ctx.obj['config_dir'] = CONFIG_DIR
+    ctx.obj['verbose'] = verbose
 
-# Register commands
-cli.add_command(upload.upload)
-cli.add_command(invoice.invoice)
-cli.add_command(config.config)
-cli.add_command(open_project.open_cmd)
-cli.add_command(docs.docs)
-cli.add_command(share.share)
+
+def register_commands():
+    """Register all command groups and commands."""
+    from .commands import config, invoice, upload, open_project, docs, share
+    
+    cli.add_command(config.config)
+    cli.add_command(invoice.invoice)
+    cli.add_command(upload.upload)
+    cli.add_command(open_project.open_cmd)
+    cli.add_command(docs.docs)
+    cli.add_command(share.share)
+
+
+# Register commands on import
+register_commands()
 ```
 
 ### Command Modules
@@ -70,10 +88,15 @@ Each command in `cli/commands/*.py`:
 import click
 
 @click.command()
-@click.argument('file')
-@click.option('--apartment', '-a', required=True)
-def upload(file, apartment):
-    """Upload reservations to Google Sheets."""
+@click.argument('csv_files', nargs=-1, type=click.Path(exists=True), required=True)
+@click.option('--apartment', '-a', required=True,
+              help='Apartment name (matches config file)')
+@click.option('--year', '-y', type=int, default=2026,
+              help='Year for config file')
+@click.option('--test', is_flag=True,
+              help='Use test configuration')
+def upload(csv_files, apartment, year, test):
+    """Upload reservation CSVs to Google Sheets."""
     # Implementation
     pass
 ```
@@ -87,17 +110,28 @@ def upload(file, apartment):
 ```python
 @click.group()
 def invoice():
-    """Invoice management."""
+    """Manage invoices."""
     pass
 
 @invoice.command('create')
-def create():
-    """Create invoice."""
+@click.option('--apartment', '-a', required=True)
+@click.option('--months', '-m', required=True)
+@click.option('--year', '-y', type=int, default=2026)
+@click.option('--test', is_flag=True)
+@click.option('--email', '-e', help='Email to share invoice with')
+def create(apartment, months, year, test, email):
+    """Create an invoice from reservation data."""
     pass
 
 @invoice.command('list')
-def list_invoices():
-    """List invoices."""
+@click.option('--apartment', '-a')
+def list_invoices(apartment):
+    """List all generated invoices."""
+    pass
+
+@invoice.command('config')
+def config():
+    """Configure invoice settings for an apartment."""
     pass
 ```
 
@@ -105,6 +139,7 @@ Usage:
 ```bash
 reservations invoice create -a apt -m jan
 reservations invoice list -a apt
+reservations invoice config
 ```
 
 ### Config Group
@@ -116,15 +151,26 @@ def config():
     pass
 
 @config.command('list')
+def list():
+    """List all available configuration files."""
+    pass
+
 @config.command('create')
+def create():
+    """Create a new configuration (interactive wizard)."""
+    pass
+
 @config.command('delete')
+def delete():
+    """Delete configuration files (interactive)."""
+    pass
 ```
 
 Usage:
 ```bash
 reservations config list
-reservations config create -a apt
-reservations config delete apt_2025
+reservations config create
+reservations config delete
 ```
 
 ## Utilities
