@@ -397,7 +397,9 @@ def invoice_list(apartment):
         click.echo(f"   Months: {', '.join([m.capitalize() for m in inv['months']])}")
         click.echo(f"   Year: {inv['year']}")
         click.echo(f"   Created: {inv['created_at'][:10]}")
-        click.echo(f"   🔗 {inv.get('sheet_url', 'N/A')}")
+        owner_info = inv.get('owner_info', {})
+        if owner_info and owner_info.get('client_name'):
+            click.echo(f"   Owner: {owner_info['client_name']}")
     
     click.echo(f"\n📊 Total: {len(all_invoices)} invoice(s)")
     click.echo()
