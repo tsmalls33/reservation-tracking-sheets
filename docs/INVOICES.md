@@ -110,8 +110,6 @@ reservations invoice create -a downtown-loft -m all
 | `q2` | april,may,june |
 | `q3` | july,august,september |
 | `q4` | october,november,december |
-| `h1` | january-june |
-| `h2` | july-december |
 | `all` | Full year (january-december) |
 
 ### Examples
@@ -243,14 +241,6 @@ Production:
 Test:
   TEST_DL_0001 - 2026-01-10 - January 2026 - 750.00
 ```
-
-### View Invoice Details
-
-```bash
-reservations invoice view DL_0003
-```
-
-Shows full metadata including links.
 
 ## PDF Export
 
