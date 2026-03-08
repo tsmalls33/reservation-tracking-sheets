@@ -8,20 +8,25 @@ from pathlib import Path
 from .. import PROJECT_ROOT, CONFIG_DIR
 from ..utils.platform import detect_platform
 from ..utils.config import validate_apartment_config
+from ..utils.completion import complete_apartment, complete_year
 from ..utils.display import error, success, section_header, info
 
 
 @click.command()
 @click.argument('csv_files', nargs=-1, type=click.Path(exists=True), required=True)
-@click.option('--apartment', '-a', required=True, 
+@click.option('--apartment', '-a', required=True,
+              shell_complete=complete_apartment,
               help='Apartment name (matches config file: {apartment}_{year}.json)')
 @click.option('--year', '-y', type=int, default=2026,
+              shell_complete=complete_year,
               help='Year for config file (default: 2026)')
 @click.option('--test', is_flag=True,
               help='Use test configuration ({apartment}_{year}_test.json)')
 @click.option('--hard-replace', '-H', is_flag=True,
               help='Clear ALL month tabs (default: only clear detected months)')
-def upload(csv_files, apartment, year, test, hard_replace):
+@click.option('--keep-source', is_flag=True,
+              help='Keep original CSV files after upload (default: deletes them)')
+def upload(csv_files, apartment, year, test, hard_replace, keep_source):
     """Process and upload reservation CSVs to Google Sheets.
     
     Automatically detects platform (Airbnb/Booking.com), processes CSVs,
@@ -153,6 +158,11 @@ def upload(csv_files, apartment, year, test, hard_replace):
             section_header("✅ SUCCESS")
             click.echo(f"Uploaded to: {apartment}_{year}{config_suffix}")
             click.echo()
+
+            if not keep_source:
+                for csv_file in csv_files:
+                    Path(csv_file).unlink()
+                info("🗑️  Deleted original CSV files")
 
         except subprocess.CalledProcessError:
             section_header("❌ UPLOAD FAILED")

@@ -146,6 +146,18 @@ Open `config/downtown-loft_2026.json` and update:
 
 See [Configuration Guide](CONFIGURATION.md) for full details.
 
+## Shell Completion (Optional)
+
+Enable tab-completion for `--apartment`, `--months`, and `--year` options. Add one line to your shell profile:
+
+| Shell | File | Line to add |
+|-------|------|-------------|
+| Bash | `~/.bashrc` | `eval "$(_RESERVATIONS_COMPLETE=bash_source reservations)"` |
+| Zsh | `~/.zshrc` | `eval "$(_RESERVATIONS_COMPLETE=zsh_source reservations)"` |
+| Fish | `~/.config/fish/config.fish` | `_RESERVATIONS_COMPLETE=fish_source reservations \| source` |
+
+Then restart your terminal or source the file (e.g., `source ~/.bashrc`).
+
 ## Testing Installation
 
 ### Quick Test

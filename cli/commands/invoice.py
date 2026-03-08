@@ -7,6 +7,7 @@ import click
 from .. import PROJECT_ROOT, CONFIG_DIR
 from ..utils.config import list_config_files, validate_apartment_config
 from ..utils.months import parse_months
+from ..utils.completion import complete_apartment, complete_months, complete_year
 from ..utils.display import error, success, warning, section_header
 
 
@@ -213,10 +214,13 @@ def invoice_config():
 
 
 @invoice.command('create')
-@click.option('--apartment', '-a', required=True, help='Apartment name')
-@click.option('--months', '-m', required=True, 
+@click.option('--apartment', '-a', required=True,
+              shell_complete=complete_apartment, help='Apartment name')
+@click.option('--months', '-m', required=True,
+              shell_complete=complete_months,
               help='Months (jan,feb or q1,q2 or all)')
-@click.option('--year', '-y', type=int, default=2026, help='Year (default: 2026)')
+@click.option('--year', '-y', type=int, default=2026,
+              shell_complete=complete_year, help='Year (default: 2026)')
 @click.option('--email', '-e', help='Email to share invoice with')
 @click.option('--test', is_flag=True,
               help='Use test reservation config and TEST_ invoice numbering')
@@ -293,7 +297,8 @@ def invoice_create(apartment, months, year, email, test):
 
 
 @invoice.command('list')
-@click.option('--apartment', '-a', help='Filter by apartment')
+@click.option('--apartment', '-a',
+              shell_complete=complete_apartment, help='Filter by apartment')
 def invoice_list(apartment):
     """List all generated invoices.
     

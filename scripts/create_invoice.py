@@ -478,7 +478,11 @@ def create_invoice(apartment, months, year, additional_emails=None, test=False):
     # Populate invoice
     print_step("✏️", "Populating invoice...")
     populate_invoice(client, invoice_sheet, invoice_config, apartment_info, invoice_number, invoice_date, df, commission_total)
-    
+
+    # Rename spreadsheet to invoice number
+    invoice_sheet.update_title(invoice_number)
+    print_step("📝", f"Renamed spreadsheet to: {invoice_number}")
+
     # Generate PDF export link
     print_step("📄", "Generating PDF export link...")
     pdf_link = generate_pdf_export_link(invoice_sheet.id)
