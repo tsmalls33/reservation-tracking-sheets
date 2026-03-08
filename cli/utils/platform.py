@@ -39,7 +39,7 @@ def detect_platform(filename: str) -> str:
             return 'airbnb'
         if any(x in content for x in ['booking', 'reservation number', 'invoice number']):
             return 'booking'
-    except:
+    except OSError:
         pass
     
     raise ValueError(

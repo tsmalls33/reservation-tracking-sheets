@@ -283,16 +283,15 @@ def invoice_create(apartment, months, year, email, test):
         if email:
             cmd.extend(['--email', email])
         
-        subprocess.run(cmd, check=True)
+        subprocess.run(cmd, check=True, stderr=subprocess.PIPE, text=True)
 
-    except click.BadParameter as e:
-        error(str(e))
-        sys.exit(1)
     except ValueError as e:
         error(str(e))
         sys.exit(1)
-    except subprocess.CalledProcessError:
+    except subprocess.CalledProcessError as e:
         error("Invoice creation failed!")
+        if e.stderr:
+            click.echo(e.stderr, err=True)
         sys.exit(1)
 
 
@@ -324,7 +323,7 @@ def invoice_list(apartment):
                         data = json.load(f)
                         data['apartment'] = apartment
                         all_invoices.append(data)
-                except:
+                except (json.JSONDecodeError, OSError):
                     pass
     else:
         # All apartments
@@ -335,7 +334,7 @@ def invoice_list(apartment):
                         with open(invoice_file, 'r', encoding='utf-8') as f:
                             data = json.load(f)
                             all_invoices.append(data)
-                    except:
+                    except (json.JSONDecodeError, OSError):
                         pass
     
     if not all_invoices:

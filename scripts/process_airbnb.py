@@ -36,7 +36,16 @@ def process_airbnb_csv(input_file, output_file=None, cleaning_fee=25.0):
         raise KeyError(f"Could not find column. Tried: {possible_names}. Available columns: {list(df.columns)}")
 
     # Read CSV
-    df = pd.read_csv(input_file)
+    try:
+        df = pd.read_csv(input_file, encoding='utf-8')
+    except UnicodeDecodeError:
+        df = pd.read_csv(input_file, encoding='latin-1')
+    except FileNotFoundError:
+        print(f"✗ File not found: {input_file}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"✗ Error reading CSV: {e}", file=sys.stderr)
+        sys.exit(1)
 
     # Resolve column names
     guest_col = find_column(column_mappings['guest_name'])
