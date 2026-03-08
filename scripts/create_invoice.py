@@ -32,6 +32,37 @@ MONTH_NAMES = {
     'december': {'en': 'December', 'es': 'Diciembre'}
 }
 
+def col_num_to_letter(col_num):
+    """Convert a 1-based column number to a column letter (A, B, ..., Z, AA, AB, ...).
+
+    Args:
+        col_num: 1-based column number (1=A, 26=Z, 27=AA, etc.)
+
+    Returns:
+        str: Column letter(s)
+    """
+    result = ''
+    while col_num > 0:
+        col_num, remainder = divmod(col_num - 1, 26)
+        result = chr(ord('A') + remainder) + result
+    return result
+
+
+def col_letter_to_num(col_letter):
+    """Convert a column letter (A, B, ..., Z, AA, AB, ...) to a 1-based number.
+
+    Args:
+        col_letter: Column letter(s) like 'A', 'Z', 'AA', etc.
+
+    Returns:
+        int: 1-based column number
+    """
+    num = 0
+    for ch in col_letter.upper():
+        num = num * 26 + (ord(ch) - ord('A') + 1)
+    return num
+
+
 def print_header(title, char="="):
     print(f"\n{char * 70}")
     print(f"  {title}")
@@ -323,11 +354,11 @@ def cleanup_template_before_populate(worksheet, invoice_config):
     num_cols = 5
     num_rows = 12  # Always clear for 12 months (no TOTAL row)
     
-    # Calculate end column (A + 5 columns = E)
-    end_col_num = ord(table_start_col) + num_cols - 1
-    end_col = chr(end_col_num)
+    # Calculate end column (handles multi-letter columns like AA, AB, etc.)
+    start_col_num = col_letter_to_num(table_start_col)
+    end_col = col_num_to_letter(start_col_num + num_cols - 1)
     end_row = table_start_row + num_rows - 1
-    
+
     table_range = f"{table_start_col}{table_start_row}:{end_col}{end_row}"
     ranges_to_clear.append(table_range)
     
@@ -381,12 +412,12 @@ def populate_invoice(client, spreadsheet, invoice_config, apartment_info, invoic
     # Prepare table data - convert DataFrame to list of lists
     table_data = df.values.tolist()
     
-    # Calculate range
+    # Calculate range (handles multi-letter columns like AA, AB, etc.)
     num_cols = len(df.columns)
-    end_col_num = ord(table_start_col) + num_cols - 1
-    end_col = chr(end_col_num)
+    start_col_num = col_letter_to_num(table_start_col)
+    end_col = col_num_to_letter(start_col_num + num_cols - 1)
     end_row = table_start_row + len(df) - 1
-    
+
     range_name = f"{table_start_col}{table_start_row}:{end_col}{end_row}"
     
     # Use value_input_option='USER_ENTERED' to let Sheets interpret the data types

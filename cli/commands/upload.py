@@ -1,8 +1,10 @@
 """Upload command for processing and uploading reservation data."""
 
+import json
 import sys
 import subprocess
 import shutil
+from datetime import datetime
 import click
 from pathlib import Path
 from .. import PROJECT_ROOT, CONFIG_DIR
@@ -17,9 +19,9 @@ from ..utils.display import error, success, section_header, info
 @click.option('--apartment', '-a', required=True,
               shell_complete=complete_apartment,
               help='Apartment name (matches config file: {apartment}_{year}.json)')
-@click.option('--year', '-y', type=int, default=2026,
+@click.option('--year', '-y', type=int, default=datetime.now().year,
               shell_complete=complete_year,
-              help='Year for config file (default: 2026)')
+              help='Year for config file (default: current year)')
 @click.option('--test', is_flag=True,
               help='Use test configuration ({apartment}_{year}_test.json)')
 @click.option('--hard-replace', '-H', is_flag=True,
@@ -84,27 +86,39 @@ def upload(csv_files, apartment, year, test, hard_replace, keep_source):
         error(str(e))
         sys.exit(1)
 
+    # Load apartment config to read optional settings (e.g., cleaning_fee)
+    config_suffix = '_test' if test else ''
+    config_path = CONFIG_DIR / f"{apartment}_{year}{config_suffix}.json"
+    cleaning_fee = 25.0  # default
+    try:
+        with open(config_path, 'r') as f:
+            apartment_config = json.load(f)
+        cleaning_fee = float(apartment_config.get('cleaning_fee', 25.0))
+    except (json.JSONDecodeError, ValueError):
+        pass  # Use default on error
+
     # Create temp directory
     temp_dir = PROJECT_ROOT / "data" / "temp"
     temp_dir.mkdir(parents=True, exist_ok=True)
-    
+
     try:
         # Process each CSV
         processed_files = []
         section_header("PROCESSING CSVs")
-        
+
         for csv_file in csv_files:
             try:
                 platform = detect_platform(csv_file)
                 script_path = PROJECT_ROOT / f"scripts/process_{platform}.py"
                 processed = temp_dir / f"{Path(csv_file).stem}_{platform}_processed.csv"
-                
+
                 click.echo(f"\n🔄 Processing {click.style(platform.upper(), fg='cyan')}: {Path(csv_file).name}")
-                
+
                 # Process CSV (capture stderr for error reporting)
                 result = subprocess.run([
                     sys.executable, str(script_path),
-                    str(csv_file), str(processed)
+                    str(csv_file), str(processed),
+                    '--cleaning-fee', str(cleaning_fee)
                 ], check=True, capture_output=True, text=True)
                 if result.stdout:
                     click.echo(result.stdout, nl=False)
@@ -160,7 +174,6 @@ def upload(csv_files, apartment, year, test, hard_replace, keep_source):
         if hard_replace:
             cmd.append('--hard-replace')
 
-        config_suffix = '_test' if test else ''
         click.echo(f"📤 Target: {click.style(f'{apartment}_{year}{config_suffix}', fg='cyan')}")
         
         try:
