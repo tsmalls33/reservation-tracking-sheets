@@ -31,8 +31,15 @@ def parse_months(month_input: str) -> list:
                 f"Valid options: jan-dec, q1-q4, all"
             )
     
-    # Convert abbreviations to full month names
-    return [MONTH_ABBREV[a] for a in abbrevs]
+    # Convert abbreviations to full month names, removing duplicates while preserving order
+    seen = set()
+    result = []
+    for a in abbrevs:
+        month = MONTH_ABBREV[a]
+        if month not in seen:
+            seen.add(month)
+            result.append(month)
+    return result
 
 
 def translate_tab_names(config_data: dict, target_language: str) -> dict:

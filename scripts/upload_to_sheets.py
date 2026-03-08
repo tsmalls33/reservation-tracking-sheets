@@ -127,7 +127,7 @@ def load_config(apartment_name, year, test_mode=False):
     print_step("🔍", f"Looking for config: {apartment_name}_{year}{suffix}.json")
     
     if Path(config_path).exists():
-        with open(config_path, 'r') as f:
+        with open(config_path, 'r', encoding='utf-8') as f:
             config = json.load(f)
         print_success(f"Config loaded")
         print_info(f"Spreadsheet: {config['spreadsheet_id'][:20]}...")
@@ -322,8 +322,9 @@ def upload_reservations(client, config, spreadsheet_id, csv_file, hard_replace=F
         tab_name = get_tab_name(config, tab_key)
         
         if tab_name not in available_tabs:
+            print_info(f"⚠️  Tab '{tab_name}' not found in spreadsheet, skipping clear", indent=1)
             continue
-        
+
         try:
             ws = get_worksheet_fuzzy(spreadsheet, tab_name)
             # Use physical_columns from config for dynamic clearing
@@ -332,6 +333,7 @@ def upload_reservations(client, config, spreadsheet_id, csv_file, hard_replace=F
             print_info(f"{tab_name}: Cleared {num_cols} columns", indent=1)
             cleared_count += 1
         except gspread.exceptions.WorksheetNotFound:
+            print_info(f"⚠️  Tab '{tab_name}' not found in spreadsheet, skipping clear", indent=1)
             continue
     
     print_success(f"Cleared {cleared_count} tabs")
@@ -349,8 +351,9 @@ def upload_reservations(client, config, spreadsheet_id, csv_file, hard_replace=F
         tab_name = get_tab_name(config, tab_key)
         
         if tab_name not in available_tabs:
+            print_info(f"⚠️  Tab '{tab_name}' not found in spreadsheet, skipping upload", indent=1)
             continue
-        
+
         month_data = df[df['month_name'] == tab_key.split('_')[0]]
         
         # Get month name in the configured language
@@ -360,6 +363,7 @@ def upload_reservations(client, config, spreadsheet_id, csv_file, hard_replace=F
         try:
             worksheet = get_worksheet_fuzzy(spreadsheet, tab_name)
         except gspread.exceptions.WorksheetNotFound:
+            print_info(f"⚠️  Tab '{tab_name}' not found in spreadsheet, skipping upload", indent=1)
             continue
 
         # Update B2 with month name in configured language

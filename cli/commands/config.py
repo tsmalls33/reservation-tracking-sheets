@@ -44,18 +44,18 @@ def config_list():
             
             # Try to read language and spreadsheet ID
             try:
-                with open(config_file, 'r') as f:
+                with open(config_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     sheet_id = data.get('spreadsheet_id', 'N/A')[:30]
                     language = data.get('language', 'en').upper()
-                    
+
                     badge = click.style('[TEST]', fg='yellow') if is_test else click.style('[PROD]', fg='green')
                     lang_badge = click.style(f'[{language}]', fg='blue')
-                    
+
                     click.echo(f"  {badge} {lang_badge} {config_file.name}")
                     click.echo(f"     → Sheet: {sheet_id}...")
-            except:
-                warning(f"{config_file.name} (invalid JSON)")
+            except (json.JSONDecodeError, OSError) as e:
+                warning(f"{config_file.name} (invalid JSON: {e})")
     
     click.echo(f"\n📊 Total: {sum(len(v) for v in configs.values())} config(s) across {len(configs)} apartment(s)")
     click.echo()
@@ -82,7 +82,7 @@ def config_create():
     click.echo("\n📋 Available templates:\n")
 
     display_numbered_config_list(all_configs)
-    
+
     # Get user choice
     click.echo()
     choice = click.prompt('Choose a template (number)', type=int)
@@ -95,7 +95,7 @@ def config_create():
     click.echo(f"\n✅ Using template: {click.style(template_file.name, fg='cyan')}")
     
     # Load template
-    with open(template_file, 'r') as f:
+    with open(template_file, 'r', encoding='utf-8') as f:
         template_data = json.load(f)
     
     # Get new config details
@@ -139,7 +139,7 @@ def config_create():
             return
     
     # Save new config
-    with open(new_filepath, 'w') as f:
+    with open(new_filepath, 'w', encoding='utf-8') as f:
         json.dump(new_config, f, indent=2)
     
     section_header("✅ CONFIG CREATED")
@@ -171,7 +171,7 @@ def config_delete():
     click.echo("\n🗑️  Available configs:\n")
 
     display_numbered_config_list(all_configs)
-    
+
     # Get user selection
     click.echo()
     click.echo("Enter config number(s) to delete:")

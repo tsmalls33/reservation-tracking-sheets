@@ -9,20 +9,26 @@ import click
 from pathlib import Path
 from .. import PROJECT_ROOT, CONFIG_DIR
 from ..utils.platform import detect_platform
+from ..utils.config import validate_apartment_config
+from ..utils.completion import complete_apartment, complete_year
 from ..utils.display import error, success, section_header, info
 
 
 @click.command()
 @click.argument('csv_files', nargs=-1, type=click.Path(exists=True), required=True)
-@click.option('--apartment', '-a', required=True, 
+@click.option('--apartment', '-a', required=True,
+              shell_complete=complete_apartment,
               help='Apartment name (matches config file: {apartment}_{year}.json)')
 @click.option('--year', '-y', type=int, default=datetime.now().year,
+              shell_complete=complete_year,
               help='Year for config file (default: current year)')
 @click.option('--test', is_flag=True,
               help='Use test configuration ({apartment}_{year}_test.json)')
 @click.option('--hard-replace', '-H', is_flag=True,
               help='Clear ALL month tabs (default: only clear detected months)')
-def upload(csv_files, apartment, year, test, hard_replace):
+@click.option('--keep-source', is_flag=True,
+              help='Keep original CSV files after upload (default: deletes them)')
+def upload(csv_files, apartment, year, test, hard_replace, keep_source):
     """Process and upload reservation CSVs to Google Sheets.
     
     Automatically detects platform (Airbnb/Booking.com), processes CSVs,
@@ -73,17 +79,23 @@ def upload(csv_files, apartment, year, test, hard_replace):
         error("Provide at least one CSV file")
         sys.exit(1)
 
+    # Validate apartment config exists before doing any processing
+    try:
+        validate_apartment_config(CONFIG_DIR, apartment, year, test)
+    except click.BadParameter as e:
+        error(str(e))
+        sys.exit(1)
+
     # Load apartment config to read optional settings (e.g., cleaning_fee)
     config_suffix = '_test' if test else ''
     config_path = CONFIG_DIR / f"{apartment}_{year}{config_suffix}.json"
     cleaning_fee = 25.0  # default
-    if config_path.exists():
-        try:
-            with open(config_path, 'r') as f:
-                apartment_config = json.load(f)
-            cleaning_fee = float(apartment_config.get('cleaning_fee', 25.0))
-        except (json.JSONDecodeError, ValueError):
-            pass  # Use default on error
+    try:
+        with open(config_path, 'r') as f:
+            apartment_config = json.load(f)
+        cleaning_fee = float(apartment_config.get('cleaning_fee', 25.0))
+    except (json.JSONDecodeError, ValueError):
+        pass  # Use default on error
 
     # Create temp directory
     temp_dir = PROJECT_ROOT / "data" / "temp"
@@ -102,34 +114,46 @@ def upload(csv_files, apartment, year, test, hard_replace):
 
                 click.echo(f"\n🔄 Processing {click.style(platform.upper(), fg='cyan')}: {Path(csv_file).name}")
 
-                # Process with real-time output
-                subprocess.run([
+                # Process CSV (capture stderr for error reporting)
+                result = subprocess.run([
                     sys.executable, str(script_path),
                     str(csv_file), str(processed),
                     '--cleaning-fee', str(cleaning_fee)
-                ], check=True)
-                
+                ], check=True, capture_output=True, text=True)
+                if result.stdout:
+                    click.echo(result.stdout, nl=False)
+
                 processed_files.append(processed)
                 success("Processed")
-                
+
             except ValueError as e:
                 error(str(e))
                 sys.exit(1)
-            except subprocess.CalledProcessError:
+            except subprocess.CalledProcessError as e:
                 error(f"Processing failed for {csv_file}")
+                if e.stderr:
+                    click.echo(e.stderr, err=True)
                 sys.exit(1)
-        
+
         # Merge if multiple files
         if len(processed_files) > 1:
             click.echo("\n" + "-"*70)
             merge_script = PROJECT_ROOT / "scripts/merge_data.py"
             merged = temp_dir / f"{apartment}_{year}_merged.csv"
-            
+
             click.echo(f"🔀 Merging {click.style(str(len(processed_files)), fg='cyan')} files...")
-            subprocess.run([
-                sys.executable, str(merge_script),
-                *[str(f) for f in processed_files], str(merged)
-            ], check=True)
+            try:
+                merge_result = subprocess.run([
+                    sys.executable, str(merge_script),
+                    *[str(f) for f in processed_files], str(merged)
+                ], check=True, capture_output=True, text=True)
+                if merge_result.stdout:
+                    click.echo(merge_result.stdout, nl=False)
+            except subprocess.CalledProcessError as e:
+                error("Merge failed")
+                if e.stderr:
+                    click.echo(e.stderr, err=True)
+                sys.exit(1)
             final_csv = merged
             success("Merged")
         else:
@@ -153,15 +177,17 @@ def upload(csv_files, apartment, year, test, hard_replace):
         click.echo(f"📤 Target: {click.style(f'{apartment}_{year}{config_suffix}', fg='cyan')}")
         
         try:
-            # Upload with real-time output
-            subprocess.run(cmd, check=True, capture_output=False, text=True)
-            
+            # Upload with real-time stdout, capture stderr for error reporting
+            subprocess.run(cmd, check=True, stderr=subprocess.PIPE, text=True)
+
             section_header("✅ SUCCESS")
             click.echo(f"Uploaded to: {apartment}_{year}{config_suffix}")
             click.echo()
-            
-        except subprocess.CalledProcessError:
+
+        except subprocess.CalledProcessError as e:
             section_header("❌ UPLOAD FAILED")
+            if e.stderr:
+                click.echo(e.stderr, err=True)
             raise  # Re-raise to trigger cleanup in finally block
     
     finally:
