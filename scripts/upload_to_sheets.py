@@ -33,6 +33,37 @@ MONTH_NAMES = {
     'december': {'en': 'December', 'es': 'Diciembre'}
 }
 
+def col_num_to_letter(col_num):
+    """Convert a 1-based column number to a column letter (A, B, ..., Z, AA, AB, ...).
+
+    Args:
+        col_num: 1-based column number (1=A, 26=Z, 27=AA, etc.)
+
+    Returns:
+        str: Column letter(s)
+    """
+    result = ''
+    while col_num > 0:
+        col_num, remainder = divmod(col_num - 1, 26)
+        result = chr(ord('A') + remainder) + result
+    return result
+
+
+def col_letter_to_num(col_letter):
+    """Convert a column letter (A, B, ..., Z, AA, AB, ...) to a 1-based number.
+
+    Args:
+        col_letter: Column letter(s) like 'A', 'Z', 'AA', etc.
+
+    Returns:
+        int: 1-based column number
+    """
+    num = 0
+    for ch in col_letter.upper():
+        num = num * 26 + (ord(ch) - ord('A') + 1)
+    return num
+
+
 def print_header(title, char="="):
     """Print a styled header."""
     print(f"\n{char * 70}")
@@ -96,7 +127,7 @@ def load_config(apartment_name, year, test_mode=False):
     print_step("🔍", f"Looking for config: {apartment_name}_{year}{suffix}.json")
     
     if Path(config_path).exists():
-        with open(config_path, 'r') as f:
+        with open(config_path, 'r', encoding='utf-8') as f:
             config = json.load(f)
         print_success(f"Config loaded")
         print_info(f"Spreadsheet: {config['spreadsheet_id'][:20]}...")
@@ -169,12 +200,11 @@ def clear_exact_range(worksheet, start_cell, num_cols, num_rows):
     """
     start_col_letter = ''.join(filter(str.isalpha, start_cell))
     start_row = int(''.join(filter(str.isdigit, start_cell)))
-    
-    # Calculate end column letter
-    start_col_num = ord(start_col_letter.upper()) - ord('A') + 1
-    end_col_num = start_col_num + num_cols - 1
-    end_col_letter = chr(ord('A') + end_col_num - 1)
-    
+
+    # Calculate end column letter (handles multi-letter columns like AA, AB, etc.)
+    start_col_num = col_letter_to_num(start_col_letter)
+    end_col_letter = col_num_to_letter(start_col_num + num_cols - 1)
+
     end_row = start_row + num_rows - 1
     range_str = f"{start_cell}:{end_col_letter}{end_row}"
     
@@ -292,8 +322,9 @@ def upload_reservations(client, config, spreadsheet_id, csv_file, hard_replace=F
         tab_name = get_tab_name(config, tab_key)
         
         if tab_name not in available_tabs:
+            print_info(f"⚠️  Tab '{tab_name}' not found in spreadsheet, skipping clear", indent=1)
             continue
-        
+
         try:
             ws = get_worksheet_fuzzy(spreadsheet, tab_name)
             # Use physical_columns from config for dynamic clearing
@@ -303,6 +334,7 @@ def upload_reservations(client, config, spreadsheet_id, csv_file, hard_replace=F
             print_info(f"{tab_name}: Cleared {num_cols} columns", indent=1)
             cleared_count += 1
         except gspread.exceptions.WorksheetNotFound:
+            print_info(f"⚠️  Tab '{tab_name}' not found in spreadsheet, skipping clear", indent=1)
             continue
     
     print_success(f"Cleared {cleared_count} tabs")
@@ -320,8 +352,9 @@ def upload_reservations(client, config, spreadsheet_id, csv_file, hard_replace=F
         tab_name = get_tab_name(config, tab_key)
         
         if tab_name not in available_tabs:
+            print_info(f"⚠️  Tab '{tab_name}' not found in spreadsheet, skipping upload", indent=1)
             continue
-        
+
         month_data = df[df['month_name'] == tab_key.split('_')[0]]
         
         # Get month name in the configured language
@@ -331,6 +364,7 @@ def upload_reservations(client, config, spreadsheet_id, csv_file, hard_replace=F
         try:
             worksheet = get_worksheet_fuzzy(spreadsheet, tab_name)
         except gspread.exceptions.WorksheetNotFound:
+            print_info(f"⚠️  Tab '{tab_name}' not found in spreadsheet, skipping upload", indent=1)
             continue
 
         # Update B2 with month name in configured language
@@ -382,7 +416,7 @@ def main():
     )
     parser.add_argument('--csv', required=True, help="Path to processed CSV")
     parser.add_argument('--apartment', required=True, help="Apartment name")
-    parser.add_argument('--year', type=int, default=2026, help="Year (default: 2026)")
+    parser.add_argument('--year', type=int, default=datetime.now().year, help="Year (default: current year)")
     parser.add_argument('--hard-replace', action='store_true', help="Clear ALL tabs")
     parser.add_argument('--test', action='store_true', help="Use test config")
     

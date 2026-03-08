@@ -52,6 +52,13 @@ def cli(ctx, verbose):
       • CONFIGURATION.md - Apartment config and column mappings
       • INVOICES.md - Invoice generation and management
       • CLI_ARCHITECTURE.md - Technical architecture details
+
+    \b
+    Shell Completion:
+      Enable tab-completion (add to your shell profile):
+        bash: eval "$(_RESERVATIONS_COMPLETE=bash_source reservations)"
+        zsh:  eval "$(_RESERVATIONS_COMPLETE=zsh_source reservations)"
+        fish: _RESERVATIONS_COMPLETE=fish_source reservations | source
     """
     # Ensure context object exists
     ctx.ensure_object(dict)

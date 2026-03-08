@@ -9,6 +9,9 @@
   "language": "en",
   "_note_language": "Language code: 'en' for English, 'es' for Spanish. Affects month tab names.",
 
+  "cleaning_fee": 25.0,
+  "_note_cleaning_fee": "Cleaning fee per reservation in euros (optional, default: 25.0)",
+
   "tabs": {
     "january_reservations": {
       "tab_name": "January",

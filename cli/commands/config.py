@@ -4,7 +4,7 @@ import sys
 import json
 import click
 from .. import CONFIG_DIR
-from ..utils.config import list_config_files
+from ..utils.config import list_config_files, get_flat_config_list, display_numbered_config_list
 from ..utils.months import translate_tab_names
 from ..utils.display import error, success, warning, section_header
 
@@ -45,18 +45,18 @@ def config_list():
             
             # Try to read language and spreadsheet ID
             try:
-                with open(config_file, 'r') as f:
+                with open(config_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     sheet_id = data.get('spreadsheet_id', 'N/A')[:30]
                     language = data.get('language', 'en').upper()
-                    
+
                     badge = click.style('[TEST]', fg='yellow') if is_test else click.style('[PROD]', fg='green')
                     lang_badge = click.style(f'[{language}]', fg='blue')
-                    
+
                     click.echo(f"  {badge} {lang_badge} {config_file.name}")
                     click.echo(f"     → Sheet: {sheet_id}...")
-            except:
-                warning(f"{config_file.name} (invalid JSON)")
+            except (json.JSONDecodeError, OSError) as e:
+                warning(f"{config_file.name} (invalid JSON: {e})")
     
     click.echo(f"\n📊 Total: {sum(len(v) for v in configs.values())} config(s) across {len(configs)} apartment(s)")
     click.echo()
@@ -72,35 +72,18 @@ def config_create():
     3. Configuring Google Sheet ID
     4. Setting language (EN/ES) - automatically translates tab names
     """
-    configs = list_config_files(CONFIG_DIR)
-    
-    if not configs:
+    all_configs = get_flat_config_list(CONFIG_DIR)
+
+    if not all_configs:
         error("No existing configs to use as template!")
         click.echo("\nCreate your first config manually in config/ directory.")
         sys.exit(1)
 
     section_header("CREATE NEW CONFIG")
     click.echo("\n📋 Available templates:\n")
-    
-    all_configs = []
-    for apartment in sorted(configs.keys()):
-        for config_file in sorted(configs[apartment]):
-            all_configs.append(config_file)
-    
-    for idx, config_file in enumerate(all_configs, 1):
-        name = config_file.stem
-        is_test = name.endswith('_test')
-        badge = click.style('[TEST]', fg='yellow') if is_test else click.style('[PROD]', fg='green')
-        
-        try:
-            with open(config_file, 'r') as f:
-                data = json.load(f)
-                language = data.get('language', 'en').upper()
-                lang_badge = click.style(f'[{language}]', fg='blue')
-                click.echo(f"  {idx}. {badge} {lang_badge} {config_file.name}")
-        except:
-            click.echo(f"  {idx}. {config_file.name}")
-    
+
+    display_numbered_config_list(all_configs)
+
     # Get user choice
     click.echo()
     choice = click.prompt('Choose a template (number)', type=int)
@@ -113,7 +96,7 @@ def config_create():
     click.echo(f"\n✅ Using template: {click.style(template_file.name, fg='cyan')}")
     
     # Load template
-    with open(template_file, 'r') as f:
+    with open(template_file, 'r', encoding='utf-8') as f:
         template_data = json.load(f)
     
     # Get new config details
@@ -157,7 +140,7 @@ def config_create():
             return
     
     # Save new config
-    with open(new_filepath, 'w') as f:
+    with open(new_filepath, 'w', encoding='utf-8') as f:
         json.dump(new_config, f, indent=2)
     
     section_header("✅ CONFIG CREATED")
@@ -179,35 +162,18 @@ def config_delete():
     Displays a numbered list of all configs and allows deletion
     of single or multiple configs (e.g., 1 or 1,3,5).
     """
-    configs = list_config_files(CONFIG_DIR)
-    
-    if not configs:
+    all_configs = get_flat_config_list(CONFIG_DIR)
+
+    if not all_configs:
         error("No configuration files found in config/")
         sys.exit(1)
 
-    # Build flat list of all configs
-    all_configs = []
-    for apartment in sorted(configs.keys()):
-        for config_file in sorted(configs[apartment]):
-            all_configs.append(config_file)
-    
+
     section_header("DELETE CONFIGURATION FILES")
     click.echo("\n🗑️  Available configs:\n")
-    
-    for idx, config_file in enumerate(all_configs, 1):
-        name = config_file.stem
-        is_test = name.endswith('_test')
-        badge = click.style('[TEST]', fg='yellow') if is_test else click.style('[PROD]', fg='green')
-        
-        try:
-            with open(config_file, 'r') as f:
-                data = json.load(f)
-                language = data.get('language', 'en').upper()
-                lang_badge = click.style(f'[{language}]', fg='blue')
-                click.echo(f"  {idx}. {badge} {lang_badge} {config_file.name}")
-        except:
-            click.echo(f"  {idx}. {config_file.name}")
-    
+
+    display_numbered_config_list(all_configs)
+
     # Get user selection
     click.echo()
     click.echo("Enter config number(s) to delete:")

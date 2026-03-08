@@ -1,3 +1,4 @@
+import argparse
 import pandas as pd
 from pathlib import Path
 import sys
@@ -133,15 +134,15 @@ def process_booking_csv(input_file, output_file=None, cleaning_fee=25.0):
 
 
 if __name__ == "__main__":
-    # Example usage
-    if len(sys.argv) > 1:
-        input_file = sys.argv[1]
-    else:
-        input_file = input("Enter path to Booking.com CSV/XLS export: ")
-    
-    output_file = sys.argv[2] if len(sys.argv) > 2 else None
-    
-    df = process_booking_csv(input_file, output_file)
+    parser = argparse.ArgumentParser(description="Process Booking.com CSV/XLS export")
+    parser.add_argument('input_file', help="Path to raw Booking.com CSV or XLS file")
+    parser.add_argument('output_file', nargs='?', default=None, help="Path for processed output")
+    parser.add_argument('--cleaning-fee', type=float, default=25.0,
+                        help="Cleaning fee per reservation (default: 25.0)")
+
+    args = parser.parse_args()
+
+    df = process_booking_csv(args.input_file, args.output_file, cleaning_fee=args.cleaning_fee)
     print("\nSample output:")
     print(df.head())
 
