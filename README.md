@@ -42,9 +42,9 @@ pip install -e .
    - Save as `credentials/service_account.json`
 
 2. **Share Your Sheet**
-   - Open your Google Sheet
-   - Share with service account email (found in JSON key)
-   - Grant "Editor" access
+   - Run `reservations share` to display the service account email
+   - Open your Google Sheet and click **Share**
+   - Paste the email and grant "Editor" access
 
 3. **Configure Apartment**
    ```bash
@@ -62,6 +62,9 @@ reservations upload airbnb.csv booking.csv -a downtown-loft
 
 # Create invoice for specific months
 reservations invoice create -a downtown-loft -m january,february
+
+# Get service account email for Google Sheets sharing
+reservations share
 
 # View apartment's Google Sheet
 reservations open -a downtown-loft
@@ -145,6 +148,13 @@ reservations config create -a APARTMENT -y YEAR
 reservations config delete CONFIGS...
 ```
 
+### Share
+
+```bash
+# Display service account email for Google Sheets sharing
+reservations share
+```
+
 ### Quick Access
 
 ```bash
@@ -190,7 +200,8 @@ reservation-tracking-sheets/
 │   │   ├── upload.py          # Upload command
 │   │   ├── invoice.py         # Invoice management
 │   │   ├── config.py          # Config management
-│   │   └── open_project.py    # Project/sheet access
+│   │   ├── open_project.py    # Project/sheet access
+│   │   └── share.py           # Service account email display
 │   └── utils/                 # Shared utilities
 ├── scripts/                   # Data processing scripts
 │   ├── process_airbnb.py      # Airbnb CSV processor
@@ -308,7 +319,7 @@ Verify tab names in config match Google Sheet (whitespace ignored).
 
 ### Permission denied (Google Sheets)
 
-Ensure service account email has "Editor" access to the spreadsheet.
+Run `reservations share` to get the service account email, then ensure it has "Editor" access to the spreadsheet.
 
 ## 🤝 Contributing
 

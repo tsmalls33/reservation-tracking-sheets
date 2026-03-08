@@ -110,13 +110,12 @@ ls -la credentials/service_account.json
 
 ### 2. Share With Service Account
 
-1. Open `credentials/service_account.json`
-2. Find `client_email` (looks like `xyz@abc.iam.gserviceaccount.com`)
-3. In your Google Sheet, click **Share**
-4. Add service account email
-5. Grant **Editor** access
-6. **Uncheck** "Notify people" (it's a robot, not a person!)
-7. Click **Share**
+1. Run `reservations share` to display the service account email
+2. In your Google Sheet, click **Share**
+3. Paste the service account email
+4. Grant **Editor** access
+5. **Uncheck** "Notify people" (it's a robot, not a person!)
+6. Click **Share**
 
 ### 3. Create Apartment Configuration
 
@@ -205,9 +204,10 @@ pip install -e .
 
 ### Permission denied (Google Sheets)
 
-1. Verify service account email has access
-2. Check it has "Editor" permission
-3. Try re-sharing the sheet
+1. Run `reservations share` to get the service account email
+2. Verify it has access to the spreadsheet
+3. Check it has "Editor" permission
+4. Try re-sharing the sheet
 
 ### Credentials not found
 
