@@ -94,9 +94,48 @@ def invoice_config():
         apartment_name = all_apartments[selection - 1]
         current_config = invoices_config.get("apartments", {}).get(apartment_name, {})
         
-        mode_label = click.style('[UPDATE]', fg='yellow')
-        click.echo(f"\n{mode_label} Updating invoice config for: {click.style(apartment_name, fg='cyan', bold=True)}")
-        click.echo(f"\n💡 {click.style('Tip:', fg='blue')} Press Enter to keep current value, type space to clear")
+        if current_config:
+            mode_label = click.style('[UPDATE]', fg='yellow')
+            click.echo(f"\n{mode_label} Updating invoice config for: {click.style(apartment_name, fg='cyan', bold=True)}")
+            click.echo(f"\n💡 {click.style('Tip:', fg='blue')} Press Enter to keep current value, type space to clear")
+        else:
+            click.echo(f"\n{click.style('Creating invoice config for:', fg='green', bold=True)} {click.style(apartment_name, fg='cyan', bold=True)}")
+    
+    # Offer to copy owner info from another config when there's no existing owner data
+    owner_fields = ['client_name', 'client_address', 'client_zip_code', 'client_city', 'client_id']
+    has_owner_info = any(current_config.get(f) for f in owner_fields)
+    
+    if not has_owner_info:
+        existing_apartments = invoices_config.get("apartments", {})
+        configs_with_owner = {
+            name: cfg for name, cfg in existing_apartments.items()
+            if any(cfg.get(f) for f in owner_fields)
+        }
+        
+        if configs_with_owner:
+            click.echo()
+            if click.confirm(click.style('Copy owner info from an existing config?', fg='blue'), default=False):
+                click.echo(f"\n📋 Available configs with owner info:\n")
+                owner_list = sorted(configs_with_owner.keys())
+                for idx, name in enumerate(owner_list, 1):
+                    client_name = configs_with_owner[name].get('client_name', '')
+                    label = f" - {click.style(client_name, fg='yellow')}" if client_name else ''
+                    click.echo(f"  {idx}. {name}{label}")
+                
+                click.echo()
+                owner_selection = click.prompt('Select config to copy owner info from', type=int)
+                
+                if 1 <= owner_selection <= len(owner_list):
+                    source_config = configs_with_owner[owner_list[owner_selection - 1]]
+                    for field in owner_fields:
+                        if source_config.get(field):
+                            current_config[field] = source_config[field]
+                    
+                    is_new = False  # Switch to update mode so user can review/edit copied values
+                    click.echo(f"\n{click.style('Owner info copied!', fg='green')} You can review and modify below.")
+                    click.echo(f"💡 {click.style('Tip:', fg='blue')} Press Enter to keep current value, type space to clear")
+                else:
+                    error("Invalid selection, continuing without copying")
     
     # Define invoice configuration fields (matching invoices.json structure)
     fields = [
