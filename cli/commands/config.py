@@ -20,29 +20,30 @@ def config():
 
 
 @config.command('list')
-def config_list():
-    """List all available configuration files grouped by apartment.
-    
-    Shows all config files organized by apartment name, including
-    year and test/production variants.
+@click.pass_context
+def config_list(ctx):
+    """List all available configuration files and optionally edit one.
+
+    Shows all config files organized by apartment name, then offers
+    a numbered selection to edit a config or create a new one.
     """
     configs = list_config_files(CONFIG_DIR)
-    
+
     if not configs:
         error("No configuration files found in config/")
         click.echo(f"\nCreate a config with: {click.style('reservations config create', fg='cyan')}")
         sys.exit(1)
 
     section_header("CONFIGURATION FILES")
-    
+
     for apartment in sorted(configs.keys()):
         click.echo(f"\n🏠 {click.style(apartment, fg='cyan', bold=True)}")
-        
+
         for config_file in sorted(configs[apartment]):
             # Parse config details
             name = config_file.stem
             is_test = name.endswith('_test')
-            
+
             # Try to read language and spreadsheet ID
             try:
                 with open(config_file, 'r', encoding='utf-8') as f:
@@ -57,8 +58,141 @@ def config_list():
                     click.echo(f"     → Sheet: {sheet_id}...")
             except (json.JSONDecodeError, OSError) as e:
                 warning(f"{config_file.name} (invalid JSON: {e})")
-    
+
     click.echo(f"\n📊 Total: {sum(len(v) for v in configs.values())} config(s) across {len(configs)} apartment(s)")
+
+    # Numbered selection for editing
+    all_configs = get_flat_config_list(CONFIG_DIR)
+
+    click.echo("\n" + "-"*70)
+    click.echo("📋 Select a config to edit:\n")
+
+    click.echo(f"  {click.style('0.', fg='cyan')} {click.style('[ New Config ]', fg='green', bold=True)}")
+    display_numbered_config_list(all_configs)
+
+    click.echo()
+    selection = click.prompt('Select config (Enter to exit)',
+                             default='', show_default=False, type=str)
+
+    if not selection.strip():
+        return
+
+    try:
+        selection = int(selection)
+    except ValueError:
+        error("Invalid input. Enter a number.")
+        sys.exit(1)
+
+    if selection < 0 or selection > len(all_configs):
+        error("Invalid selection")
+        sys.exit(1)
+
+    # New config
+    if selection == 0:
+        ctx.invoke(config_create)
+        return
+
+    # Edit existing config
+    config_file = all_configs[selection - 1]
+
+    try:
+        with open(config_file, 'r', encoding='utf-8') as f:
+            config_data = json.load(f)
+    except (json.JSONDecodeError, OSError) as e:
+        error(f"Failed to read {config_file.name}: {e}")
+        sys.exit(1)
+
+    mode_label = click.style('[UPDATE]', fg='yellow')
+    click.echo(f"\n{mode_label} Editing: {click.style(config_file.name, fg='cyan', bold=True)}")
+    click.echo(f"\n💡 {click.style('Tip:', fg='blue')} Press Enter to keep current value, type space to clear")
+
+    # Define editable fields
+    fields = [
+        {
+            'key': 'spreadsheet_id',
+            'prompt': 'Spreadsheet ID',
+            'help': 'Google Sheet ID (from URL: docs.google.com/spreadsheets/d/{ID}/edit)',
+        },
+        {
+            'key': 'language',
+            'prompt': 'Language',
+            'help': 'Language code: en or es (affects month tab names)',
+        },
+    ]
+
+    click.echo("\n" + "-"*70)
+    click.echo("Enter configuration details:\n")
+
+    original_language = config_data.get('language', 'en')
+    new_values = {}
+
+    for field in fields:
+        key = field['key']
+        prompt_text = field['prompt']
+        help_text = field['help']
+        current_value = config_data.get(key, '')
+
+        if current_value:
+            click.echo(f"\n{click.style(prompt_text, fg='cyan')}")
+            click.echo(f"  Current: {click.style(str(current_value), fg='yellow')}")
+            click.echo(f"  ({help_text})")
+
+            user_input = click.prompt('  New value (Enter=keep, space=clear)',
+                                      default='', show_default=False, type=str)
+
+            if user_input == '':
+                new_values[key] = current_value
+            elif user_input.strip() == '':
+                new_values[key] = ''
+            else:
+                new_values[key] = user_input.strip()
+        else:
+            click.echo(f"\n{click.style(prompt_text, fg='cyan')}")
+            click.echo(f"  ({help_text})")
+
+            user_input = click.prompt('  Value',
+                                      default='', show_default=False, type=str)
+            new_values[key] = user_input.strip() if user_input else ''
+
+    # Validate language if provided
+    if new_values.get('language') and new_values['language'] not in ('en', 'es'):
+        warning(f"Invalid language '{new_values['language']}', keeping '{original_language}'")
+        new_values['language'] = original_language
+
+    # Apply updates
+    for key, value in new_values.items():
+        if value:
+            config_data[key] = value
+        else:
+            config_data.pop(key, None)
+
+    # Translate tab names if language changed
+    new_language = new_values.get('language', original_language)
+    if new_language and new_language.lower() != original_language.lower():
+        click.echo(f"\n🔄 Translating tab names from {original_language.upper()} to {new_language.upper()}...")
+        config_data = translate_tab_names(config_data, new_language.lower())
+        success("Tab names translated")
+
+    # Save
+    with open(config_file, 'w', encoding='utf-8') as f:
+        json.dump(config_data, f, indent=2)
+
+    # Summary
+    section_header("✅ CONFIG UPDATED")
+    click.echo(f"File: {click.style(config_file.name, fg='cyan')}")
+    click.echo(f"Path: {config_file}")
+
+    click.echo("\n📋 Updated fields:")
+    for field in fields:
+        key = field['key']
+        value = config_data.get(key, '')
+        if value:
+            display_value = str(value)
+            if len(display_value) > 50:
+                display_value = display_value[:47] + "..."
+            click.echo(f"  ✓ {field['prompt']}: {display_value}")
+        else:
+            click.echo(f"  ○ {field['prompt']}: {click.style('(empty)', fg='yellow')}")
     click.echo()
 
 
