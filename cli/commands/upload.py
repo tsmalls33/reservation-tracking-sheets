@@ -1,6 +1,5 @@
 """Upload command for processing and uploading reservation data."""
 
-import json
 import sys
 import subprocess
 import shutil
@@ -86,16 +85,7 @@ def upload(csv_files, apartment, year, test, hard_replace, keep_source):
         error(str(e))
         sys.exit(1)
 
-    # Load apartment config to read optional settings (e.g., cleaning_fee)
     config_suffix = '_test' if test else ''
-    config_path = CONFIG_DIR / f"{apartment}_{year}{config_suffix}.json"
-    cleaning_fee = 25.0  # default
-    try:
-        with open(config_path, 'r') as f:
-            apartment_config = json.load(f)
-        cleaning_fee = float(apartment_config.get('cleaning_fee', 25.0))
-    except (json.JSONDecodeError, ValueError):
-        pass  # Use default on error
 
     # Create temp directory
     temp_dir = PROJECT_ROOT / "data" / "temp"
@@ -117,8 +107,7 @@ def upload(csv_files, apartment, year, test, hard_replace, keep_source):
                 # Process CSV (capture stderr for error reporting)
                 result = subprocess.run([
                     sys.executable, str(script_path),
-                    str(csv_file), str(processed),
-                    '--cleaning-fee', str(cleaning_fee)
+                    str(csv_file), str(processed)
                 ], check=True, capture_output=True, text=True)
                 if result.stdout:
                     click.echo(result.stdout, nl=False)

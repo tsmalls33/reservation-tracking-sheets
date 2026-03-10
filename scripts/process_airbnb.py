@@ -4,14 +4,13 @@ from pathlib import Path
 import re
 import sys
 
-def process_airbnb_csv(input_file, output_file=None, cleaning_fee=25.0):
+def process_airbnb_csv(input_file, output_file=None):
     """
     Process Airbnb CSV export and prepare for Google Sheets upload.
 
     Args:
         input_file: Path to raw Airbnb CSV
         output_file: Path for processed output (default: data/processed/airbnb_processed.csv)
-        cleaning_fee: Default cleaning fee in euros (default: 25.0)
 
     Returns:
         DataFrame with processed data
@@ -82,14 +81,14 @@ def process_airbnb_csv(input_file, output_file=None, cleaning_fee=25.0):
     df['Precio'] = df[earnings_col].str.replace('€', '').str.replace(',', '.').str.strip().astype(float)
     
     # Set Check In/Out (cleaning fee)
-    df['Check In/Out'] = cleaning_fee
-    
+    df['Check In/Out'] = 25.0
+
     # Airbnb commission is 0 (already deducted from price)
     df['Comision'] = 0.0
-    
+
     # Leave VAT empty (let Google Sheets calculate)
     df['VAT'] = ''
-    
+
     # Select and order columns for output
     output_columns = ['Actividad', 'Entrada', 'Salida', 'Noches', 'Precio', 'Check In/Out', 'Comision', 'VAT']
     processed_df = df[output_columns]
@@ -112,11 +111,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process Airbnb CSV export")
     parser.add_argument('input_file', help="Path to raw Airbnb CSV")
     parser.add_argument('output_file', nargs='?', default=None, help="Path for processed output")
-    parser.add_argument('--cleaning-fee', type=float, default=25.0,
-                        help="Cleaning fee per reservation (default: 25.0)")
-
     args = parser.parse_args()
 
-    df = process_airbnb_csv(args.input_file, args.output_file, cleaning_fee=args.cleaning_fee)
+    df = process_airbnb_csv(args.input_file, args.output_file)
     print("\nSample output:")
     print(df.head())
