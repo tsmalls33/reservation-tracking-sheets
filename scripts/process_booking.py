@@ -8,16 +8,15 @@ import warnings
 # Suppress warnings
 warnings.filterwarnings('ignore')
 
-def process_booking_csv(input_file, output_file=None, cleaning_fee=25.0):
+def process_booking_csv(input_file, output_file=None):
     """
     Process Booking.com CSV or XLS export and prepare for Google Sheets upload.
     Handles multiple Booking.com export formats automatically.
-    
+
     Args:
         input_file: Path to raw Booking.com CSV or XLS file
         output_file: Path for processed output (default: data/processed/booking_processed.csv)
-        cleaning_fee: Default cleaning fee in euros (default: 25.0)
-    
+
     Returns:
         DataFrame with processed data
     """
@@ -107,14 +106,14 @@ def process_booking_csv(input_file, output_file=None, cleaning_fee=25.0):
     df['Precio'] = df[amount_col].apply(clean_currency)
     
     # Set Check In/Out (cleaning fee)
-    df['Check In/Out'] = cleaning_fee
-    
+    df['Check In/Out'] = 25.0
+
     # Clean and convert commission amount (remove currency symbols)
     df['Comision'] = df[commission_col].apply(clean_currency)
-    
+
     # Leave VAT empty (let Google Sheets calculate)
     df['VAT'] = ''
-    
+
     # Select and order columns for output
     output_columns = ['Actividad', 'Entrada', 'Salida', 'Noches', 'Precio', 'Check In/Out', 'Comision', 'VAT']
     processed_df = df[output_columns]
@@ -137,12 +136,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process Booking.com CSV/XLS export")
     parser.add_argument('input_file', help="Path to raw Booking.com CSV or XLS file")
     parser.add_argument('output_file', nargs='?', default=None, help="Path for processed output")
-    parser.add_argument('--cleaning-fee', type=float, default=25.0,
-                        help="Cleaning fee per reservation (default: 25.0)")
-
     args = parser.parse_args()
 
-    df = process_booking_csv(args.input_file, args.output_file, cleaning_fee=args.cleaning_fee)
+    df = process_booking_csv(args.input_file, args.output_file)
     print("\nSample output:")
     print(df.head())
 
