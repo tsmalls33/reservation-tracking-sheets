@@ -8,6 +8,8 @@ import warnings
 # Suppress warnings
 warnings.filterwarnings('ignore')
 
+TOURIST_TAX_RATE = 1.10  # €/person/night for Booking.com reservations
+
 def process_booking_csv(input_file, output_file=None):
     """
     Process Booking.com CSV or XLS export and prepare for Google Sheets upload.
@@ -102,8 +104,13 @@ def process_booking_csv(input_file, output_file=None):
     # Get number of nights
     df['Noches'] = df[nights_col].fillna(0).astype(int)
     
-    # Clean and convert price (remove currency symbols)
-    df['Precio'] = df[amount_col].apply(clean_currency)
+    # Clean and convert price (remove currency symbols).
+    # Booking.com's 'Final amount' is already the net payout (commission deducted).
+    # Add tourist tax: 1.10€ × persons × nights.
+    net_amount = df[amount_col].apply(clean_currency)
+    persons = df[persons_col].fillna(0).astype(int)
+    tourist_tax = persons * df['Noches'] * TOURIST_TAX_RATE
+    df['Precio'] = net_amount + tourist_tax
     
     # Set Check In/Out (cleaning fee)
     df['Check In/Out'] = 25.0
