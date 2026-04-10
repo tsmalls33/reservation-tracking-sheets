@@ -437,42 +437,59 @@ def save_invoice_metadata(apartment, invoice_number, invoice_data):
     with open(metadata_file, 'w', encoding='utf-8') as f:
         json.dump(invoice_data, f, indent=2)
 
-def create_invoice(apartment, months, year, additional_emails=None, test=False):
+def create_invoice(apartment, months, year, additional_emails=None, test=False, custom_invoice_number=None):
     """Main invoice creation function.
-    
+
     Args:
         apartment: Apartment name
         months: List of month keys
         year: Year
         additional_emails: Optional list of additional emails to share with
         test: If True, use test config and TEST_ invoice numbering
+        custom_invoice_number: Optional verbatim invoice number overriding auto-generation
     """
     mode_label = "TEST" if test else "PRODUCTION"
     print_header(f"📄 INVOICE CREATION ({mode_label})")
-    
+
     # Load configs
     print_step("📂", "Loading configurations...")
     invoice_config = load_invoice_config()
     apartment_config = load_apartment_config(apartment, year, test=test)
-    
+
     if apartment not in invoice_config['apartments']:
         raise ValueError(f"Apartment '{apartment}' not configured in invoices.json")
-    
+
     apartment_info = invoice_config['apartments'][apartment]
     owner_email = invoice_config.get('owner_email')
     template_id = invoice_config['template_sheet_id']
-    
+
     if not owner_email or owner_email == 'YOUR_EMAIL@example.com':
         print_step("⚠️", "Warning: owner_email not configured in config/invoices.json")
         print("   Update the 'owner_email' field to automatically share invoices with yourself.")
         owner_email = None
-    
+
+    # Resolve invoice number BEFORE any Google API calls so a duplicate custom
+    # number fails fast without touching Sheets.
+    if custom_invoice_number is not None:
+        invoice_number = custom_invoice_number.strip()
+        if not invoice_number:
+            print("Error: --invoice-number cannot be empty", file=sys.stderr)
+            sys.exit(1)
+        apartment_invoice_dir = PROJECT_ROOT / "invoices" / apartment
+        candidate = apartment_invoice_dir / f"{invoice_number}.json"
+        if candidate.exists():
+            print(
+                f"Error: invoice number '{invoice_number}' already exists at {candidate}",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+    else:
+        invoice_number = get_next_invoice_number(apartment, apartment_info['invoice_code'], test=test)
+
     # Authenticate
     print_step("🔐", "Authenticating...")
     client = authenticate_sheets()
-    
-    # Generate invoice number and date
-    invoice_number = get_next_invoice_number(apartment, apartment_info['invoice_code'], test=test)
+
     invoice_date = datetime.now().strftime('%d/%m/%Y')  # European date format
     
     print_step("🔢", f"Invoice number: {invoice_number}")
@@ -570,14 +587,23 @@ if __name__ == "__main__":
     parser.add_argument('--months', '-m', required=True, help="Comma-separated month keys")
     parser.add_argument('--year', '-y', type=int, required=True)
     parser.add_argument('--email', '-e', help="Additional email(s) to share with (comma-separated)")
+    parser.add_argument('--invoice-number', '-n', default=None,
+                        help="Custom invoice number; bypasses auto-generation.")
     parser.add_argument('--test', action='store_true',
                         help="Use test reservation config and test invoice numbering")
-    
+
     args = parser.parse_args()
     months = [m.strip() for m in args.months.split(',')]
-    
+
     additional_emails = None
     if args.email:
         additional_emails = [e.strip() for e in args.email.split(',')]
-    
-    create_invoice(args.apartment, months, args.year, additional_emails, test=args.test)
+
+    create_invoice(
+        args.apartment,
+        months,
+        args.year,
+        additional_emails,
+        test=args.test,
+        custom_invoice_number=args.invoice_number,
+    )

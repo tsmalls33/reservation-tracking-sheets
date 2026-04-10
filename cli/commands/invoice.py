@@ -262,9 +262,11 @@ def invoice_config():
 @click.option('--year', '-y', type=int, default=datetime.now().year,
               shell_complete=complete_year, help='Year (default: current year)')
 @click.option('--email', '-e', help='Email to share invoice with')
+@click.option('--invoice-number', '-n', default=None,
+              help="Custom invoice number to use verbatim instead of auto-generating.")
 @click.option('--test', is_flag=True,
               help='Use test reservation config and TEST_ invoice numbering')
-def invoice_create(apartment, months, year, email, test):
+def invoice_create(apartment, months, year, email, invoice_number, test):
     """Create an invoice from reservation data.
     
     Extracts financial data from specified months and generates
@@ -298,6 +300,13 @@ def invoice_create(apartment, months, year, email, test):
       reservations invoice create -a mediona -m q1 -y 2025 -e your@email.com
     """
     try:
+        # Validate custom invoice number (if provided) before doing any work
+        if invoice_number is not None:
+            invoice_number = invoice_number.strip()
+            if not invoice_number:
+                error("--invoice-number cannot be empty")
+                sys.exit(1)
+
         # Validate apartment config exists before doing any work
         validate_apartment_config(CONFIG_DIR, apartment, year, test)
 
@@ -322,7 +331,10 @@ def invoice_create(apartment, months, year, email, test):
         
         if email:
             cmd.extend(['--email', email])
-        
+
+        if invoice_number:
+            cmd.extend(['--invoice-number', invoice_number])
+
         subprocess.run(cmd, check=True, stderr=subprocess.PIPE, text=True)
 
     except ValueError as e:
