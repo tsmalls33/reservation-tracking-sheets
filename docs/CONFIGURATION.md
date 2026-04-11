@@ -31,7 +31,7 @@ Test configs:
 ### Using CLI (Recommended)
 
 ```bash
-reservations config create
+rez config create
 ```
 
 Interactive wizard that:
@@ -211,7 +211,7 @@ config/
 
 Specify year:
 ```bash
-reservations upload data.csv -a downtown-loft -y 2025
+rez upload data.csv -a downtown-loft -y 2025
 ```
 
 ### Test Configurations
@@ -220,10 +220,10 @@ Development/testing - create a separate test config that points to a different s
 
 ```bash
 # Run config create and select "Yes" when asked to create as test config
-reservations config create
+rez config create
 
 # Use test config
-reservations upload data.csv -a downtown-loft --test
+rez upload data.csv -a downtown-loft --test
 ```
 
 Test configs:
@@ -248,7 +248,7 @@ vim config/beachside-villa_2026.json
 ### List Configs
 
 ```bash
-reservations config list
+rez config list
 ```
 
 Shows:
@@ -266,7 +266,7 @@ beachside-villa:
 ### Delete Configs
 
 ```bash
-reservations config delete
+rez config delete
 ```
 
 Interactive - shows numbered list and prompts for selection.
@@ -303,7 +303,7 @@ Test upload with minimal data:
 
 ```bash
 # Create test.csv with one row
-reservations upload test.csv -a downtown-loft --test
+rez upload test.csv -a downtown-loft --test
 ```
 
 Check:
@@ -361,7 +361,7 @@ Check:
 ### Config not found
 
 ```bash
-reservations config list  # Check available configs
+rez config list  # Check available configs
 ls config/                # Check file names
 ```
 
@@ -369,7 +369,7 @@ ls config/                # Check file names
 
 Verify `sheet_col_offset` values:
 ```bash
-reservations upload test.csv -a downtown-loft --test
+rez upload test.csv -a downtown-loft --test
 ```
 
 Check alignment, adjust offsets.

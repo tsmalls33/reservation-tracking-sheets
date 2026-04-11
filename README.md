@@ -42,13 +42,13 @@ pip install -e .
    - Save as `credentials/service_account.json`
 
 2. **Share Your Sheet**
-   - Run `reservations share` to display the service account email
+   - Run `rez share` to display the service account email
    - Open your Google Sheet and click **Share**
    - Paste the email and grant "Editor" access
 
 3. **Configure Apartment**
    ```bash
-   reservations config create
+   rez config create
    ```
    Follow the interactive prompts to create your apartment configuration.
 
@@ -56,19 +56,19 @@ pip install -e .
 
 ```bash
 # Upload single CSV
-reservations upload airbnb_export.csv -a downtown-loft
+rez upload airbnb_export.csv -a downtown-loft
 
 # Upload multiple files (auto-merges)
-reservations upload airbnb.csv booking.csv -a downtown-loft
+rez upload airbnb.csv booking.csv -a downtown-loft
 
 # Create invoice for specific months
-reservations invoice create -a downtown-loft -m january,february
+rez invoice create -a downtown-loft -m january,february
 
 # Get service account email for Google Sheets sharing
-reservations share
+rez share
 
 # View apartment's Google Sheet
-reservations open -a downtown-loft
+rez open -a downtown-loft
 ```
 
 ## Global Options
@@ -88,7 +88,7 @@ reservations open -a downtown-loft
 ### Upload Reservations
 
 ```bash
-reservations upload [FILES...] -a APARTMENT [-y YEAR] [-H] [--test] [--keep-source]
+rez upload [FILES...] -a APARTMENT [-y YEAR] [-H] [--test] [--keep-source]
 ```
 
 **Options:**
@@ -101,80 +101,80 @@ reservations upload [FILES...] -a APARTMENT [-y YEAR] [-H] [--test] [--keep-sour
 **Examples:**
 ```bash
 # Single file
-reservations upload bookings.csv -a downtown-loft
+rez upload bookings.csv -a downtown-loft
 
 # Multiple files (auto-merges Airbnb + Booking.com)
-reservations upload airbnb.csv booking.csv -a downtown-loft
+rez upload airbnb.csv booking.csv -a downtown-loft
 
 # Test mode
-reservations upload data.csv -a downtown-loft --test
+rez upload data.csv -a downtown-loft --test
 
 # Clear all months first
-reservations upload data.csv -a downtown-loft -H
+rez upload data.csv -a downtown-loft -H
 
 # Keep original CSV files
-reservations upload data.csv -a downtown-loft --keep-source
+rez upload data.csv -a downtown-loft --keep-source
 ```
 
 ### Invoice Management
 
 ```bash
 # Create invoice
-reservations invoice create -a APARTMENT -m MONTHS [-y YEAR] [--test] [-e EMAIL]
+rez invoice create -a APARTMENT -m MONTHS [-y YEAR] [--test] [-e EMAIL]
 
 # List invoices
-reservations invoice list -a APARTMENT
+rez invoice list -a APARTMENT
 
 # Configure invoice settings
-reservations invoice config
+rez invoice config
 ```
 
 **Examples:**
 ```bash
 # Single month
-reservations invoice create -a downtown-loft -m january
+rez invoice create -a downtown-loft -m january
 
 # Multiple months
-reservations invoice create -a downtown-loft -m january,february,march
+rez invoice create -a downtown-loft -m january,february,march
 
 # Quarter
-reservations invoice create -a downtown-loft -m q1
+rez invoice create -a downtown-loft -m q1
 
 # Entire year
-reservations invoice create -a downtown-loft -m all
+rez invoice create -a downtown-loft -m all
 ```
 
 ### Configuration
 
 ```bash
 # List configurations
-reservations config list
+rez config list
 
 # Create new configuration (interactive)
-reservations config create
+rez config create
 
 # Delete configuration (interactive)
-reservations config delete
+rez config delete
 ```
 
 ### Share
 
 ```bash
 # Display service account email for Google Sheets sharing
-reservations share
+rez share
 ```
 
 ### Quick Access
 
 ```bash
 # Open project in Neovim
-reservations open
+rez open
 
 # View apartment's Google Sheet (displays clickable link)
-reservations open -a downtown-loft
+rez open -a downtown-loft
 
 # View test sheet for specific year
-reservations open -a downtown-loft -y 2025 --test
+rez open -a downtown-loft -y 2025 --test
 ```
 
 ## ⌨️ Shell Completion (Optional)
@@ -183,24 +183,24 @@ Enable tab-completion for apartment names, months, and years. Add **one line** t
 
 **Bash** (`~/.bashrc`):
 ```bash
-eval "$(_RESERVATIONS_COMPLETE=bash_source reservations)"
+eval "$(_REZ_COMPLETE=bash_source rez)"
 ```
 
 **Zsh** (`~/.zshrc`):
 ```bash
-eval "$(_RESERVATIONS_COMPLETE=zsh_source reservations)"
+eval "$(_REZ_COMPLETE=zsh_source rez)"
 ```
 
 **Fish** (`~/.config/fish/config.fish`):
 ```fish
-_RESERVATIONS_COMPLETE=fish_source reservations | source
+_REZ_COMPLETE=fish_source rez | source
 ```
 
 Then restart your shell or `source` the file. After that:
 ```
-reservations upload data.csv -a <TAB>       → duplex  mediona  sant-domenec ...
-reservations invoice create -m <TAB>        → jan  feb  ... q1  q2  ... all
-reservations open -y <TAB>                  → 2025  2026
+rez upload data.csv -a <TAB>       → duplex  mediona  sant-domenec ...
+rez invoice create -m <TAB>        → jan  feb  ... q1  q2  ... all
+rez open -y <TAB>                  → 2025  2026
 ```
 
 ## 🏗️ Project Structure
@@ -322,7 +322,7 @@ pip install -e .
 Check naming: `{apartment}_{year}.json` or `{apartment}_{year}_test.json`
 
 ```bash
-reservations config list  # See available configs
+rez config list  # See available configs
 ```
 
 ### Worksheet not found
@@ -331,7 +331,7 @@ Verify tab names in config match Google Sheet (whitespace ignored).
 
 ### Permission denied (Google Sheets)
 
-Run `reservations share` to get the service account email, then ensure it has "Editor" access to the spreadsheet.
+Run `rez share` to get the service account email, then ensure it has "Editor" access to the spreadsheet.
 
 ## 🤝 Contributing
 

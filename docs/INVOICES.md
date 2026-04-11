@@ -16,7 +16,7 @@ The invoice system:
 ### 1. Configure Invoice Settings
 
 ```bash
-reservations invoice config
+rez invoice config
 ```
 
 Edits `config/invoices.json`:
@@ -82,16 +82,16 @@ These are extracted and used in invoice calculation.
 
 ```bash
 # Single month
-reservations invoice create -a downtown-loft -m january
+rez invoice create -a downtown-loft -m january
 
 # Multiple months
-reservations invoice create -a downtown-loft -m january,february,march
+rez invoice create -a downtown-loft -m january,february,march
 
 # Quarter
-reservations invoice create -a downtown-loft -m q1
+rez invoice create -a downtown-loft -m q1
 
 # Full year
-reservations invoice create -a downtown-loft -m all
+rez invoice create -a downtown-loft -m all
 ```
 
 ### Options
@@ -116,16 +116,16 @@ reservations invoice create -a downtown-loft -m all
 
 ```bash
 # Q1 invoice
-reservations invoice create -a downtown-loft -m q1
+rez invoice create -a downtown-loft -m q1
 
 # Custom range
-reservations invoice create -a downtown-loft -m january,march,may
+rez invoice create -a downtown-loft -m january,march,may
 
 # Test invoice
-reservations invoice create -a downtown-loft -m january --test
+rez invoice create -a downtown-loft -m january --test
 
 # Share with additional email
-reservations invoice create -a downtown-loft -m q1 -e client@example.com
+rez invoice create -a downtown-loft -m q1 -e client@example.com
 ```
 
 ## Invoice Numbering
@@ -149,7 +149,7 @@ Format: `{CODE}_{NUMBER}`
 Separate numbering with TEST_ prefix:
 
 ```bash
-reservations invoice create -a downtown-loft -m january --test
+rez invoice create -a downtown-loft -m january --test
 # Creates: TEST_DL_0001
 ```
 
@@ -247,7 +247,7 @@ Metadata saved to `invoices/{apartment}/{invoice_number}.json`:
 ### List Invoices
 
 ```bash
-reservations invoice list -a downtown-loft
+rez invoice list -a downtown-loft
 ```
 
 Shows:
@@ -324,7 +324,7 @@ Always reserves 12 rows in template for maximum flexibility.
 ### Invoice config not found
 
 ```bash
-reservations invoice config  # Edit config
+rez invoice config  # Edit config
 ls config/invoices.json       # Check exists
 ```
 
@@ -364,7 +364,7 @@ Verify:
 
 ```bash
 # End of Q1
-reservations invoice create -a downtown-loft -m q1 -e owner@property.com
+rez invoice create -a downtown-loft -m q1 -e owner@property.com
 
 # Download PDF from link
 # Send to property owner
@@ -375,7 +375,7 @@ reservations invoice create -a downtown-loft -m q1 -e owner@property.com
 
 ```bash
 # End of year
-reservations invoice create -a downtown-loft -m all
+rez invoice create -a downtown-loft -m all
 
 # Creates invoice with all 12 months
 # Total commission for entire year
@@ -385,14 +385,14 @@ reservations invoice create -a downtown-loft -m all
 
 ```bash
 # Create test invoice
-reservations invoice create -a downtown-loft -m january --test
+rez invoice create -a downtown-loft -m january --test
 
 # Review output
 # Adjust template as needed
 # Re-run until perfect
 
 # Switch to production
-reservations invoice create -a downtown-loft -m january
+rez invoice create -a downtown-loft -m january
 ```
 
 ## Next Steps

@@ -22,7 +22,7 @@ def share():
 
     \b
     Usage:
-      reservations share
+      rez share
 
     \b
     Then in Google Sheets:

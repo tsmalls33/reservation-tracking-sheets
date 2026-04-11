@@ -137,9 +137,9 @@ def config():
 
 Usage:
 ```bash
-reservations invoice create -a apt -m jan
-reservations invoice list -a apt
-reservations invoice config
+rez invoice create -a apt -m jan
+rez invoice list -a apt
+rez invoice config
 ```
 
 ### Config Group
@@ -168,9 +168,9 @@ def delete():
 
 Usage:
 ```bash
-reservations config list
-reservations config create
-reservations config delete
+rez config list
+rez config create
+rez config delete
 ```
 
 ## Utilities
@@ -340,8 +340,8 @@ def upload():
     
     \\b
     Examples:
-      reservations upload data.csv -a apt
-      reservations upload a.csv b.csv -a apt
+      rez upload data.csv -a apt
+      rez upload a.csv b.csv -a apt
     """
     pass
 ```
@@ -368,7 +368,7 @@ The `\\b` preserves formatting in examples.
 **Help texts live in two places:**
 
 1. **Docstrings** in command functions (`cli/commands/*.py`):
-   - Displayed when running `reservations <command> --help`
+   - Displayed when running `rez <command> --help`
    - Written directly in the function docstring
    - Use `\\b` to preserve formatting
 
@@ -391,7 +391,7 @@ def upload(csv_files, apartment):
     
     \\b
     Examples:
-      reservations upload data.csv -a downtown-loft
+      rez upload data.csv -a downtown-loft
     """
     # Implementation
 ```
@@ -405,10 +405,10 @@ def upload(csv_files, apartment):
 pip install -e .
 
 # Test commands
-reservations --help
-reservations upload --help
-reservations config list
-reservations docs
+rez --help
+rez upload --help
+rez config list
+rez docs
 ```
 
 ### Testing Scripts Directly
@@ -438,7 +438,7 @@ def new_cmd(arg, option):
     
     \\b
     Examples:
-      reservations new-cmd myarg -o value
+      rez new-cmd myarg -o value
     """
     click.echo(f"Running new command: {arg}, {option}")
 ```
@@ -454,8 +454,8 @@ cli.add_command(new_cmd.new_cmd)
 3. **Test**:
 
 ```bash
-reservations new-cmd myarg --option value
-reservations new-cmd --help
+rez new-cmd myarg --option value
+rez new-cmd --help
 ```
 
 ## Best Practices
