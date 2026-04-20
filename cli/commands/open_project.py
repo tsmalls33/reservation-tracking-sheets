@@ -27,16 +27,16 @@ def open_cmd(apartment, year, test):
     \b
     Examples:
       # Open project in Neovim
-      reservations open
-      
+      rez open
+
       # View Mediona 2026 Google Sheet link
-      reservations open -a mediona
-      
+      rez open -a mediona
+
       # View Sant Domènec 2026 test sheet link
-      reservations open -a sant-domenec --test
-      
+      rez open -a sant-domenec --test
+
       # View specific year
-      reservations open -a mediona -y 2025
+      rez open -a mediona -y 2025
     
     \b
     Note:

@@ -42,7 +42,7 @@ Previously used `data/raw/` and `data/processed/` folders have been removed. All
 ## Upload Workflow
 
 ```
-1. User runs: reservations upload airbnb.csv booking.csv -a downtown-loft
+1. User runs: rez upload airbnb.csv booking.csv -a downtown-loft
 
 2. Create temp folder:
    data/temp/
@@ -132,7 +132,7 @@ Store downloaded CSVs separately:
 Reference them:
 
 ```bash
-reservations upload ~/Downloads/airbnb_export_jan_2026.csv -a downtown-loft
+rez upload ~/Downloads/airbnb_export_jan_2026.csv -a downtown-loft
 ```
 
 ### Archive Old CSVs (Optional)

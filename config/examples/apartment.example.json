@@ -155,7 +155,7 @@
   },
 
   "_notes": {
-    "quick_start": "1. Copy this file to {apartment}_{year}.json | 2. Update spreadsheet_id | 3. Configure tabs for each month | 4. Run: reservations upload data.csv -a {apartment}",
+    "quick_start": "1. Copy this file to {apartment}_{year}.json | 2. Update spreadsheet_id | 3. Configure tabs for each month | 4. Run: rez upload data.csv -a {apartment}",
     "csv_field_names": "Must match exact column names in your CSV exports from Airbnb/Booking.com",
     "sheet_col_offset": "0-indexed column position relative to start_range (0=first column, 1=second, etc.)",
     "calculated_fields": "Use 'csv_fields' array + 'operation' to combine multiple CSV columns. Currently supports: 'sum'",

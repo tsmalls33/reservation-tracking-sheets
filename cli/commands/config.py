@@ -31,7 +31,7 @@ def config_list(ctx):
 
     if not configs:
         error("No configuration files found in config/")
-        click.echo(f"\nCreate a config with: {click.style('reservations config create', fg='cyan')}")
+        click.echo(f"\nCreate a config with: {click.style('rez config create', fg='cyan')}")
         sys.exit(1)
 
     section_header("CONFIGURATION FILES")
@@ -285,7 +285,7 @@ def config_create():
     click.echo(f"Type: {'Test' if is_test else 'Production'}")
     click.echo(f"\n💡 {click.style('Remember:', fg='yellow', bold=True)} Share the Google Sheet with your service account email")
     click.echo(f"   (found in credentials/service_account.json or in notes.md) as {click.style('Editor', bold=True)}")
-    click.echo(f"\nUse with: {click.style(f'reservations upload file.csv -a {apartment_name} -y {year}', fg='cyan')}")
+    click.echo(f"\nUse with: {click.style(f'rez upload file.csv -a {apartment_name} -y {year}', fg='cyan')}")
     click.echo()
 
 

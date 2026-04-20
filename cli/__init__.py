@@ -34,11 +34,11 @@ def cli(ctx, verbose):
 
     \b
     Quick Start:
-      reservations upload bookings.csv -a downtown-loft
-      reservations invoice create -a downtown-loft -m january,february
-      reservations share
-      reservations open -a downtown-loft
-      reservations docs
+      rez upload bookings.csv -a downtown-loft
+      rez invoice create -a downtown-loft -m january,february
+      rez share
+      rez open -a downtown-loft
+      rez docs
 
     \b
     Configuration:
@@ -47,7 +47,7 @@ def cli(ctx, verbose):
 
     \b
     Documentation:
-      Run 'reservations docs' to view full documentation online.
+      Run 'rez docs' to view full documentation online.
       Or see docs/ folder for detailed guides:
       • INSTALLATION.md - Setup and Google Cloud configuration
       • CONFIGURATION.md - Apartment config and column mappings
@@ -57,9 +57,9 @@ def cli(ctx, verbose):
     \b
     Shell Completion:
       Enable tab-completion (add to your shell profile):
-        bash: eval "$(_RESERVATIONS_COMPLETE=bash_source reservations)"
-        zsh:  eval "$(_RESERVATIONS_COMPLETE=zsh_source reservations)"
-        fish: _RESERVATIONS_COMPLETE=fish_source reservations | source
+        bash: eval "$(_REZ_COMPLETE=bash_source rez)"
+        zsh:  eval "$(_REZ_COMPLETE=zsh_source rez)"
+        fish: _REZ_COMPLETE=fish_source rez | source
     """
     # Ensure context object exists
     ctx.ensure_object(dict)

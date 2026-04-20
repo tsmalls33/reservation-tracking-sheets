@@ -37,13 +37,13 @@ pip install -e .
 The `-e` flag installs in "editable" mode:
 - Changes to code take effect immediately
 - No need to reinstall after modifications
-- Makes `reservations` command available globally
+- Makes `rez` command available globally
 
 ### 4. Verify Installation
 
 ```bash
-reservations --version
-reservations --help
+rez --version
+rez --help
 ```
 
 You should see:
@@ -110,7 +110,7 @@ ls -la credentials/service_account.json
 
 ### 2. Share With Service Account
 
-1. Run `reservations share` to display the service account email
+1. Run `rez share` to display the service account email
 2. In your Google Sheet, click **Share**
 3. Paste the service account email
 4. Grant **Editor** access
@@ -120,7 +120,7 @@ ls -la credentials/service_account.json
 ### 3. Create Apartment Configuration
 
 ```bash
-reservations config create -a downtown-loft -y 2026
+rez config create -a downtown-loft -y 2026
 ```
 
 This creates `config/downtown-loft_2026.json` with a template.
@@ -151,9 +151,9 @@ Enable tab-completion for `--apartment`, `--months`, and `--year` options. Add o
 
 | Shell | File | Line to add |
 |-------|------|-------------|
-| Bash | `~/.bashrc` | `eval "$(_RESERVATIONS_COMPLETE=bash_source reservations)"` |
-| Zsh | `~/.zshrc` | `eval "$(_RESERVATIONS_COMPLETE=zsh_source reservations)"` |
-| Fish | `~/.config/fish/config.fish` | `_RESERVATIONS_COMPLETE=fish_source reservations \| source` |
+| Bash | `~/.bashrc` | `eval "$(_REZ_COMPLETE=bash_source rez)"` |
+| Zsh | `~/.zshrc` | `eval "$(_REZ_COMPLETE=zsh_source rez)"` |
+| Fish | `~/.config/fish/config.fish` | `_REZ_COMPLETE=fish_source rez \| source` |
 
 Then restart your terminal or source the file (e.g., `source ~/.bashrc`).
 
@@ -163,7 +163,7 @@ Then restart your terminal or source the file (e.g., `source ~/.bashrc`).
 
 ```bash
 # List configurations
-reservations config list
+rez config list
 
 # Should show: downtown-loft_2026
 ```
@@ -180,12 +180,12 @@ John Smith (2),2026-01-15,2026-01-18,450.00
 Upload to test config:
 
 ```bash
-reservations upload test.csv -a downtown-loft --test
+rez upload test.csv -a downtown-loft --test
 ```
 
 ## Troubleshooting
 
-### Command not found: reservations
+### Command not found: rez
 
 Reinstall the CLI:
 
@@ -204,7 +204,7 @@ pip install -e .
 
 ### Permission denied (Google Sheets)
 
-1. Run `reservations share` to get the service account email
+1. Run `rez share` to get the service account email
 2. Verify it has access to the spreadsheet
 3. Check it has "Editor" permission
 4. Try re-sharing the sheet

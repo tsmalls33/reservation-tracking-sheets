@@ -151,13 +151,13 @@ Total number of physical columns to clear, including merged cells. This ensures 
 
 ### Upload to Mediona (detailed breakdown)
 ```bash
-reservations upload file1.csv file2.csv -a mediona -y 2026
+rez upload file1.csv file2.csv -a mediona -y 2026
 ```
 Shows: Precio and Comision as separate columns
 
 ### Upload to Sant Domènec (simplified with total)
 ```bash
-reservations upload file1.csv file2.csv -a sant-domenec -y 2026
+rez upload file1.csv file2.csv -a sant-domenec -y 2026
 ```
 Shows: Precio Total (automatically calculated as Precio + Comision)
 
@@ -170,7 +170,7 @@ Both use the same CSV processing but map to different sheet layouts automaticall
 3. Define `column_mapping` with correct offsets
 4. Use `csv_field` for direct mapping OR `csv_fields` + `operation` for calculations
 5. Set `physical_columns` (count includes merged cells)
-6. Run: `reservations upload file.csv -a {apartment} -y {year}`
+6. Run: `rez upload file.csv -a {apartment} -y {year}`
 
 ## Advanced: Calculated Field Examples
 

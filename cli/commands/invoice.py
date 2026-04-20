@@ -249,7 +249,7 @@ def invoice_config():
         else:
             click.echo(f"  ○ {field['prompt']}: {click.style('(empty)', fg='yellow')}")
     
-    click.echo(f"\n💡 Use this config with: {click.style(f'reservations invoice create -a {apartment_name} -m jan', fg='cyan')}")
+    click.echo(f"\n💡 Use this config with: {click.style(f'rez invoice create -a {apartment_name} -m jan', fg='cyan')}")
     click.echo()
 
 
@@ -282,22 +282,22 @@ def invoice_create(apartment, months, year, email, invoice_number, test):
     \b
     Examples:
       # Production invoice
-      reservations invoice create -a mediona -m jan -y 2025
-      
+      rez invoice create -a mediona -m jan -y 2025
+
       # Test invoice (uses test config, TEST_ numbering)
-      reservations invoice create -a mediona -m jan -y 2025 --test
-      
+      rez invoice create -a mediona -m jan -y 2025 --test
+
       # Multiple months
-      reservations invoice create -a mediona -m jan,feb,mar -y 2025
-      
+      rez invoice create -a mediona -m jan,feb,mar -y 2025
+
       # Quarter
-      reservations invoice create -a mediona -m q1 -y 2025
-      
+      rez invoice create -a mediona -m q1 -y 2025
+
       # Full year
-      reservations invoice create -a mediona -m all -y 2025
-      
+      rez invoice create -a mediona -m all -y 2025
+
       # With email sharing
-      reservations invoice create -a mediona -m q1 -y 2025 -e your@email.com
+      rez invoice create -a mediona -m q1 -y 2025 -e your@email.com
     """
     try:
         # Validate custom invoice number (if provided) before doing any work
@@ -391,7 +391,7 @@ def invoice_list(apartment):
     
     if not all_invoices:
         warning("No invoices found")
-        click.echo(f"\nCreate one with: {click.style('reservations invoice create -a mediona -m jan', fg='cyan')}")
+        click.echo(f"\nCreate one with: {click.style('rez invoice create -a mediona -m jan', fg='cyan')}")
         return
     
     # Sort by created date

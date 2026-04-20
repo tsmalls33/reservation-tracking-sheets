@@ -40,16 +40,16 @@ def upload(csv_files, apartment, year, test, hard_replace, keep_source):
     \b
     Examples:
       # Upload single file
-      reservations upload airbnb_export.csv -a mediona -y 2026
-      
+      rez upload airbnb_export.csv -a mediona -y 2026
+
       # Upload multiple files (auto-merges)
-      reservations upload airbnb.csv booking.csv -a sant-domenec -y 2026
-      
+      rez upload airbnb.csv booking.csv -a sant-domenec -y 2026
+
       # Use test config
-      reservations upload data.csv -a mediona -y 2026 --test
-      
+      rez upload data.csv -a mediona -y 2026 --test
+
       # Clear all months before upload
-      reservations upload data.csv -a mediona -y 2026 --hard-replace
+      rez upload data.csv -a mediona -y 2026 --hard-replace
     
     \b
     What happens:
@@ -171,7 +171,7 @@ def upload(csv_files, apartment, year, test, hard_replace, keep_source):
 
             section_header("✅ SUCCESS")
             click.echo(f"Uploaded to: {apartment}_{year}{config_suffix}")
-            click.echo(f"💡 View sheet: reservations open -a {apartment}")
+            click.echo(f"💡 View sheet: rez open -a {apartment}")
             click.echo()
 
             if not keep_source:

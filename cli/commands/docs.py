@@ -22,7 +22,7 @@ def docs():
     
     \b
     Example:
-      reservations docs
+      rez docs
     """
     click.echo("\n📚 Reservation Tracking Documentation\n")
     click.echo(f"🔗 {click.style(DOCS_URL, fg='blue', underline=True)}\n")
